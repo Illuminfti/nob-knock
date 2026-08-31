@@ -10,15 +10,15 @@ Tap for sound. Double-tap to like. Sign in with X to keep receipts on file.
 
 | # | Scene | Caption |
 |---|---|---|
-| 1 | Cold email | pov: you're a cold email. purpose of visit? 'quick question' isn't one. tell the others. |
+| 1 | Cold email | pov: you're a cold email. purpose of visit? quick question isn't a purpose. tell the others. |
 | 2 | Lifehacker | lifehacker: the unsubscribe button? i am the unsubscribe button. |
-| 3 | Denials | the moves are all denials. mr bingley clocked out in frame two. |
-| 4 | Applicant | today we review an applicant. structure firm. chocolate hides things. you may enter. |
-| 5 | Closet | grwm for the door. nine identical waistcoats. standards don't skincare. right. who's knocking today. |
+| 3 | Denials | the moves are all denials. mr bingley kept the armchair. |
+| 4 | Applicant | today we review an applicant. structure firm. intentions clear. chocolate hides things. you may enter. |
+| 5 | Closet | grwm for the door. decided. buttons. descend. standards don't skincare. right. who's knocking today. |
 | 6 | Church porch | sunday. name. purpose of visit. the lord is already on the list. |
-| 7 | Sounds of the job | some of you asked for the sounds of the job. denied. denied. approval? you won't hear it often. |
+| 7 | Sounds of the job | some of you asked for the sounds of the job. denied. denied. the rarest sound of all? approval. you won't hear it often. |
 | 8 | Community hall | pov: you're on a date. purpose of visit? we booked an hour. the bell has spoken. |
-| 9 | The Internet | soon? i do all of them. circling back? nothing circles back through me. lunch is half twelve. |
+| 9 | The Internet | soon? i do all of them. every inbox on earth. a warm intro is still an intro, mum. the world waits. |
 | 10 | Fridge | the cold does not leave without authorisation. neither do the leftovers. |
 
 ## Voice

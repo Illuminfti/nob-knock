@@ -23,7 +23,7 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "Cold email",
     caption:
-      "pov: you're a cold email. purpose of visit? 'quick question' isn't one. tell the others.",
+      "pov: you're a cold email. purpose of visit? quick question isn't a purpose. tell the others.",
     sound: "letterbox click · Nob",
     seedLikes: 247,
   },
@@ -47,7 +47,7 @@ export const CLIPS: Clip[] = [
     handle: "mikehawk",
     displayName: "Mike Hawk",
     scene: "Denials",
-    caption: "the moves are all denials. mr bingley clocked out in frame two.",
+    caption: "the moves are all denials. mr bingley kept the armchair.",
     sound: "ring light · Mr Bingley",
     seedLikes: 2021,
   },
@@ -60,7 +60,7 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "Applicant",
     caption:
-      "today we review an applicant. structure firm. chocolate hides things. you may enter.",
+      "today we review an applicant. structure firm. intentions clear. chocolate hides things. you may enter.",
     sound: "biscuit crunch · original",
     seedLikes: 98,
   },
@@ -73,7 +73,7 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "Closet",
     caption:
-      "grwm for the door. nine identical waistcoats. standards don't skincare. right. who's knocking today.",
+      "grwm for the door. decided. buttons. descend. standards don't skincare. right. who's knocking today.",
     sound: "hanger scrape · Nob",
     seedLikes: 312,
   },
@@ -98,7 +98,7 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "Sounds of the job",
     caption:
-      "some of you asked for the sounds of the job. denied. denied. approval? you won't hear it often.",
+      "some of you asked for the sounds of the job. denied. denied. the rarest sound of all? approval. you won't hear it often.",
     sound: "denied. denied. · original",
     seedLikes: 1104,
   },
@@ -124,7 +124,7 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "The Internet",
     caption:
-      "soon? i do all of them. circling back? nothing circles back through me. lunch is half twelve.",
+      "soon? i do all of them. every inbox on earth. a warm intro is still an intro, mum. the world waits.",
     sound: "office stamp · Nob",
     seedLikes: 39,
   },
