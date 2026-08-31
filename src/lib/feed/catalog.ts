@@ -11,7 +11,7 @@ export type Clip = {
   seedLikes: number;
 };
 
-const V = "real10";
+const V = "v11";
 
 export const CLIPS: Clip[] = [
   {
@@ -23,7 +23,7 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "Cold email",
     caption:
-      "pov: you're a cold email. purpose of visit? quick question isn't a purpose. tell the others.",
+      "pov: you're a cold email. purpose of visit? 'quick question' isn't a purpose. wait with the others.",
     sound: "letterbox click · Nob",
     seedLikes: 247,
   },
@@ -35,7 +35,7 @@ export const CLIPS: Clip[] = [
     handle: "mikehawk",
     displayName: "Mike Hawk",
     scene: "Lifehacker",
-    caption: "lifehacker: the unsubscribe button? i am the unsubscribe button.",
+    caption: "lifehacker: the unsubscribe button? look at me. i am the unsubscribe button.",
     sound: "stamp thud · original",
     seedLikes: 4800,
   },
@@ -47,7 +47,7 @@ export const CLIPS: Clip[] = [
     handle: "mikehawk",
     displayName: "Mike Hawk",
     scene: "Denials",
-    caption: "the moves are all denials. mr bingley kept the armchair.",
+    caption: "the moves are all denials. mr bingley kept the armchair. i kept the pin.",
     sound: "ring light · Mr Bingley",
     seedLikes: 2021,
   },
@@ -73,21 +73,22 @@ export const CLIPS: Clip[] = [
     displayName: "Mike Hawk",
     scene: "Closet",
     caption:
-      "grwm for the door. decided. buttons. descend. standards don't skincare. right. who's knocking today.",
+      "grwm for the door. no skincare. standards don't moisturise. buttons. descend. right. who's knocking.",
     sound: "hanger scrape · Nob",
     seedLikes: 312,
   },
   {
-    id: "church",
-    src: `/clips/church.mp4?v=${V}`,
-    poster: `/stills/church.jpg?v=${V}`,
+    id: "eat",
+    src: `/clips/eat.mp4?v=${V}`,
+    poster: `/stills/eat.jpg?v=${V}`,
     duration: 15,
     handle: "mikehawk",
     displayName: "Mike Hawk",
-    scene: "Church porch",
-    caption: "sunday. name. purpose of visit. the lord is already on the list.",
-    sound: "church porch wind · Nob",
-    seedLikes: 12,
+    scene: "What I eat in a day",
+    caption:
+      "what i eat in a day. all three passed vetting. breakfast: grey, honest, no agenda. lunch declared itself at the door. pudding is from an approved sender. my mum.",
+    sound: "porridge stir · original",
+    seedLikes: 3,
   },
   {
     id: "sounds",
@@ -103,17 +104,17 @@ export const CLIPS: Clip[] = [
     seedLikes: 1104,
   },
   {
-    id: "date",
-    src: `/clips/date.mp4?v=${V}`,
-    poster: `/stills/date.jpg?v=${V}`,
+    id: "flat",
+    src: `/clips/flat.mp4?v=${V}`,
+    poster: `/stills/flat.jpg?v=${V}`,
     duration: 20,
     handle: "mikehawk",
     displayName: "Mike Hawk",
-    scene: "Community hall",
+    scene: "Things in my flat",
     caption:
-      "pov: you're on a date. purpose of visit? we booked an hour. the bell has spoken.",
-    sound: "community hall bell · original",
-    seedLikes: 1,
+      "things in my flat that just make sense. crowd control. arrivals lounge. one arrival today: it can wait. guest book, one entry, 2021. he didn't sign it himself. i had to. and management.",
+    sound: "velvet rope · Mr Bingley",
+    seedLikes: 2021,
   },
   {
     id: "inbox",
@@ -129,17 +130,17 @@ export const CLIPS: Clip[] = [
     seedLikes: 39,
   },
   {
-    id: "fridge",
-    src: `/clips/fridge.mp4?v=${V}`,
-    poster: `/stills/fridge.jpg?v=${V}`,
+    id: "storytime",
+    src: `/clips/storytime.mp4?v=${V}`,
+    poster: `/stills/storytime.jpg?v=${V}`,
     duration: 30,
     handle: "mikehawk",
     displayName: "Mike Hawk",
-    scene: "Fridge",
+    scene: "Storytime",
     caption:
-      "the cold does not leave without authorisation. neither do the leftovers.",
-    sound: "fridge hum · Nob",
-    seedLikes: 2019,
+      "you've been asking. the day i almost let someone in. subject: no agenda. forty seconds. i timed it. then the header: forty thousand of us. all feeling special. the stamp came down. it always comes down.",
+    sound: "stamp hover · original",
+    seedLikes: 40000,
   },
 ];
 

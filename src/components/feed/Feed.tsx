@@ -585,7 +585,7 @@ function CreatorSheet({ onClose }: { onClose: () => void }) {
     <Sheet title="The Nob" onClose={onClose}>
       <div className="flex flex-col items-center pt-6 text-center">
         <img
-          src="/stills/mike-avatar.png?v=real10"
+          src="/stills/mike-avatar.png?v=v11"
           alt=""
           className="h-28 w-28 rounded-full object-cover object-top ring-2 ring-nob"
         />
