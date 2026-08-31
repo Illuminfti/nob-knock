@@ -18,15 +18,15 @@ permissions:
 
 jobs:
   verify:
-    name: Type, lint, test, build
+    name: Type, lint, unit, build, budgets
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -34,8 +34,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check auth invariant
-        run: npm run check:auth
+      - name: Check resolved auth configuration
+        run: |
+          npm run dev > "$RUNNER_TEMP/knock-dev.log" 2>&1 &
+          dev_pid=$!
+          trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/__app-env > /dev/null; then
+              npm run check:auth -- --dev-url http://127.0.0.1:8080
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/knock-dev.log"
+          exit 1
 
       - name: Typecheck
         run: npm run typecheck
@@ -49,16 +61,19 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Media and bundle budgets
+        run: npm run perf:budget
+
   browser:
-    name: Desktop and mobile smoke
+    name: Production browser QA
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -69,39 +84,44 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Build
+      - name: Build Vercel output
         run: npm run build
 
-      - name: Start preview server
+      - name: Start production preview
         run: |
-          npm run preview > /tmp/knock-preview.log 2>&1 &
-          echo $! > /tmp/knock-preview.pid
+          npm run preview > "$RUNNER_TEMP/knock-preview.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/knock-preview.pid"
           for attempt in {1..60}; do
             if curl --fail --silent --show-error http://127.0.0.1:8081/ > /dev/null; then
               exit 0
             fi
             sleep 1
           done
-          cat /tmp/knock-preview.log
+          cat "$RUNNER_TEMP/knock-preview.log"
           exit 1
 
-      - name: Run browser smoke
+      - name: Desktop and mobile smoke
         run: |
-          sudo mkdir -p /workspace/screenshots
-          sudo chown -R "$USER":"$USER" /workspace
+          mkdir -p "$RUNNER_TEMP/knock-qa"
           node scripts/browser-smoke.mjs \
             http://127.0.0.1:8081/ \
-            /workspace/screenshots/quality.png
+            "$RUNNER_TEMP/knock-qa/browser-smoke.png"
+
+      - name: Feed interaction and player lifecycle QA
+        run: |
+          node scripts/feed-qa.mjs \
+            http://127.0.0.1:8081/ \
+            "$RUNNER_TEMP/knock-qa/feed-qa.json"
 
       - name: Upload browser evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: browser-smoke
-          path: /workspace/screenshots
+          name: browser-qa-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/knock-qa
           if-no-files-found: warn
           retention-days: 14
 
       - name: Show preview log on failure
         if: failure()
-        run: cat /tmp/knock-preview.log || true
+        run: cat "$RUNNER_TEMP/knock-preview.log" 2>/dev/null || true
