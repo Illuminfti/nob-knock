@@ -125,3 +125,5 @@ jobs:
       - name: Show preview log on failure
         if: failure()
         run: cat "$RUNNER_TEMP/knock-preview.log" 2>/dev/null || true
+
+# Keep this workflow as the merge gate for feed performance regressions.
