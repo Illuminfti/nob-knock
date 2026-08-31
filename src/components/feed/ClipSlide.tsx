@@ -205,8 +205,8 @@ export function ClipSlide({
         decoding="async"
         fetchPriority={isActive || hot ? "high" : "low"}
         loading={hot ? "eager" : "lazy"}
-        className={`absolute inset-0 h-full w-full object-cover ${failed ? "poster-drift" : ""}`}
-        onClick={handleTap}
+        draggable={false}
+        className={`clip-poster absolute inset-0 h-full w-full object-cover ${failed ? "poster-drift" : ""}`}
       />
       {hot ? (
         <video
@@ -217,8 +217,8 @@ export function ClipSlide({
           loop
           preload={isActive || ahead ? "auto" : "none"}
           disablePictureInPicture
+          controls={false}
           onTimeUpdate={onTime}
-          onClick={handleTap}
           onPlaying={() => setReady(true)}
           onLoadedData={() => setReady(true)}
           onCanPlay={() => setReady(true)}
@@ -227,6 +227,7 @@ export function ClipSlide({
       ) : null}
 
       <div className="video-veil pointer-events-none absolute inset-0" />
+      <div className="absolute inset-0 z-[1]" onClick={handleTap} />
 
       {burst ? (
         <Heart

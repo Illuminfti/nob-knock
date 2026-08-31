@@ -160,21 +160,16 @@ export function Feed({ startId }: { startId?: string }) {
 
   const skip = useCallback(
     (dir: 1 | -1) => {
-      const root = scrollerRef.current;
-      if (!root || clips.length === 0) return;
-      const idx = Math.max(0, clips.findIndex((clip) => clip.id === activeId));
-      const next = idx + dir;
-      if (next < 0 || next >= clips.length) {
-        const target = clips[dir === 1 ? 0 : clips.length - 1];
-        const height = root.clientHeight;
-        const idx = dir === 1 ? 0 : clips.length - 1;
-        if (height) root.scrollTo({ top: idx * height, behavior: "smooth" });
-        setActiveId(target.id);
-        return;
-      }
-      root.scrollBy({ top: dir * root.clientHeight, behavior: "smooth" });
+      const list = clipsRef.current;
+      if (!list.length) return;
+      const idx = Math.max(0, list.findIndex((clip) => clip.id === activeIdRef.current));
+      let next = idx + dir;
+      if (next < 0) next = list.length - 1;
+      if (next >= list.length) next = 0;
+      const target = list[next];
+      if (target) scrollToId(target.id);
     },
-    [clips, activeId],
+    [scrollToId],
   );
 
   useEffect(() => {
@@ -199,19 +194,83 @@ export function Feed({ startId }: { startId?: string }) {
   }, [skip]);
 
   useEffect(() => {
-    const root = scrollerRef.current;
-    if (!root) return;
     function onWheel(event: WheelEvent) {
       if (overlayRef.current) return;
       if (Math.abs(event.deltaY) < 18) return;
       event.preventDefault();
       const now = Date.now();
-      if (now - lastWheel.current < 520) return;
+      if (now - lastWheel.current < 480) return;
       lastWheel.current = now;
       skip(event.deltaY > 0 ? 1 : -1);
     }
-    root.addEventListener("wheel", onWheel, { passive: false });
-    return () => root.removeEventListener("wheel", onWheel);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [skip]);
+
+  useEffect(() => {
+    const node = scrollerRef.current;
+    if (!node) return;
+    const drag = { y: 0, x: 0, t: 0, live: false, scroll: 0 };
+    let swiped = false;
+
+    const onDown = (event: PointerEvent) => {
+      if (overlayRef.current) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const hit = event.target as HTMLElement | null;
+      if (hit?.closest("button, a, input, textarea")) return;
+      const box = event.currentTarget as HTMLDivElement;
+      drag.y = event.clientY;
+      drag.x = event.clientX;
+      drag.t = Date.now();
+      drag.scroll = box.scrollTop;
+      drag.live = true;
+      swiped = false;
+      try {
+        box.setPointerCapture(event.pointerId);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const onUp = (event: PointerEvent) => {
+      if (!drag.live) return;
+      drag.live = false;
+      const box = event.currentTarget as HTMLDivElement;
+      const dy = drag.y - event.clientY;
+      const dx = drag.x - event.clientX;
+      const dt = Date.now() - drag.t;
+      if (Math.abs(box.scrollTop - drag.scroll) > 24) return;
+      if (Math.abs(dy) < Math.abs(dx) * 1.15) return;
+      const flick = Math.abs(dy) > 32 && dt < 360;
+      const pull = Math.abs(dy) > 64;
+      if (!flick && !pull) return;
+      swiped = true;
+      skip(dy > 0 ? 1 : -1);
+    };
+
+    const onClick = (event: MouseEvent) => {
+      if (!swiped) return;
+      event.preventDefault();
+      event.stopPropagation();
+      swiped = false;
+    };
+
+    const onDragStart = (event: DragEvent) => {
+      event.preventDefault();
+    };
+
+    node.addEventListener("pointerdown", onDown);
+    node.addEventListener("pointerup", onUp);
+    node.addEventListener("pointercancel", onUp);
+    node.addEventListener("click", onClick, true);
+    node.addEventListener("dragstart", onDragStart);
+    return () => {
+      node.removeEventListener("pointerdown", onDown);
+      node.removeEventListener("pointerup", onUp);
+      node.removeEventListener("pointercancel", onUp);
+      node.removeEventListener("click", onClick, true);
+      node.removeEventListener("dragstart", onDragStart);
+    };
   }, [skip]);
 
   const requireUser = useCallback(() => {
