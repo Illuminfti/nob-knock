@@ -1,0 +1,107 @@
+name: Quality
+
+on:
+  push:
+    branches:
+      - main
+      - "qa/**"
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Type, lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check auth invariant
+        run: npm run check:auth
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint without warnings
+        run: npm run lint -- --max-warnings=0
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+  browser:
+    name: Desktop and mobile smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Start preview server
+        run: |
+          npm run preview > /tmp/knock-preview.log 2>&1 &
+          echo $! > /tmp/knock-preview.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8081/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/knock-preview.log
+          exit 1
+
+      - name: Run browser smoke
+        run: |
+          sudo mkdir -p /workspace/screenshots
+          sudo chown -R "$USER":"$USER" /workspace
+          node scripts/browser-smoke.mjs \
+            http://127.0.0.1:8081/ \
+            /workspace/screenshots/quality.png
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke
+          path: /workspace/screenshots
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Show preview log on failure
+        if: failure()
+        run: cat /tmp/knock-preview.log || true
