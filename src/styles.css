@@ -194,7 +194,7 @@
   scrollbar-width: none;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   user-select: none;
   overflow-anchor: none;
 }
@@ -233,6 +233,7 @@
 }
 
 .clip-slide {
+  contain: layout paint style;
   height: 100%;
   min-height: 100%;
   width: 100%;
@@ -245,6 +246,7 @@
 
 .clip-video {
   opacity: 0;
+  will-change: opacity;
   transition-property: opacity;
   transition-duration: var(--motion-fast);
   transition-timing-function: var(--ease-out);
@@ -315,6 +317,12 @@
   bottom: var(--dock-total);
   height: 2px;
   background: color-mix(in oklab, var(--color-fg) 20%, transparent);
+}
+
+.clip-progress {
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 .disc {

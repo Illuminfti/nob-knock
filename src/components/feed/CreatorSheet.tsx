@@ -25,7 +25,12 @@ export function CreatorSheet({
   const shown: Clip[] = tab === "clips" ? CLIPS : CLIPS.filter((clip) => liked.has(clip.id));
 
   return (
-    <div className="sheet-panel z-40 flex flex-col bg-bg">
+    <div
+      className="sheet-panel z-40 flex flex-col bg-bg"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mike Hawk profile"
+    >
       <div className="feed-header relative z-10 flex h-12 shrink-0 items-center justify-between px-2">
         <button
           type="button"

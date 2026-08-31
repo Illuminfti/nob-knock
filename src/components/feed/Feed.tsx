@@ -25,6 +25,7 @@ type Overlay = "search" | "creator" | "you" | null;
 export function Feed({ startId }: { startId?: string }) {
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
+  const userId = user?.id;
   const scrollerRef = useRef<HTMLDivElement>(null);
   const lastWheel = useRef(0);
   const stampTimer = useRef<number>(0);
@@ -36,16 +37,31 @@ export function Feed({ startId }: { startId?: string }) {
     startId && CLIPS.some((c) => c.id === startId) ? startId : (CLIPS[0]?.id ?? ""),
   );
   const [liked, setLiked] = useState<Set<string>>(new Set());
+  const likedRef = useRef(liked);
+  const likeQueues = useRef(new Map<string, Promise<void>>());
+  const likeVersions = useRef(new Map<string, number>());
+  likedRef.current = liked;
   const [stamp, setStamp] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<Overlay>(null);
   overlayRef.current = overlay;
 
   useEffect(() => {
+    if (isPending) return;
+    let cancelled = false;
+    if (!userId) {
+      setLiked(new Set());
+      return;
+    }
     void listMyLikes()
-      .then((ids) => setLiked(new Set(ids)))
+      .then((ids) => {
+        if (!cancelled) setLiked(new Set(ids));
+      })
       .catch(() => undefined);
-  }, [user?.id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isPending, userId]);
 
   useEffect(() => {
     return () => {
@@ -85,6 +101,15 @@ export function Feed({ startId }: { startId?: string }) {
     });
     return true;
   }, []);
+
+  useEffect(() => {
+    if (clips.length === 0) {
+      if (activeIdRef.current) setActiveId("");
+      return;
+    }
+    if (clips.some((clip) => clip.id === activeIdRef.current)) return;
+    scrollToId(clips[0]!.id);
+  }, [clips, scrollToId]);
 
   useEffect(() => {
     const root = scrollerRef.current;
@@ -128,13 +153,20 @@ export function Feed({ startId }: { startId?: string }) {
     if (startId === activeIdRef.current) return;
     scrollToId(startId);
     // Inbound URL only. Our own replace updates already match activeId.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startId, scrollToId]);
 
   useEffect(() => {
-    if (!activeId) return;
-    void navigate({ to: "/", search: { c: activeId }, replace: true });
-  }, [activeId, navigate]);
+    if (!activeId || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.pathname === "/" && url.searchParams.get("c") === activeId) return;
+    url.pathname = "/";
+    url.searchParams.set("c", activeId);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, [activeId]);
 
   const lastForYouId = useRef(activeId);
   const didMountTab = useRef(false);
@@ -155,7 +187,7 @@ export function Feed({ startId }: { startId?: string }) {
       return;
     }
     scrollerRef.current?.scrollTo({ top: 0, behavior: "instant" });
-    setActiveId(clips[0]?.id ?? "");
+    setActiveId(clipsRef.current[0]?.id ?? "");
   }, [tab, scrollToId]);
 
   const skip = useCallback(
@@ -199,7 +231,7 @@ export function Feed({ startId }: { startId?: string }) {
       if (Math.abs(event.deltaY) < 18) return;
       event.preventDefault();
       const now = Date.now();
-      if (now - lastWheel.current < 480) return;
+      if (now - lastWheel.current < 360) return;
       lastWheel.current = now;
       skip(event.deltaY > 0 ? 1 : -1);
     }
@@ -255,78 +287,120 @@ export function Feed({ startId }: { startId?: string }) {
       swiped = false;
     };
 
+    const onCancel = () => {
+      drag.live = false;
+      swiped = false;
+    };
+
     const onDragStart = (event: DragEvent) => {
       event.preventDefault();
     };
 
     node.addEventListener("pointerdown", onDown);
     node.addEventListener("pointerup", onUp);
-    node.addEventListener("pointercancel", onUp);
+    node.addEventListener("pointercancel", onCancel);
     node.addEventListener("click", onClick, true);
     node.addEventListener("dragstart", onDragStart);
     return () => {
       node.removeEventListener("pointerdown", onDown);
       node.removeEventListener("pointerup", onUp);
-      node.removeEventListener("pointercancel", onUp);
+      node.removeEventListener("pointercancel", onCancel);
       node.removeEventListener("click", onClick, true);
       node.removeEventListener("dragstart", onDragStart);
     };
   }, [skip]);
 
-  const requireUser = useCallback(() => {
-    if (isPending) return false;
-    if (!user) {
-      void navigate({ to: "/login", search: { c: activeId } });
-      return false;
-    }
-    return true;
-  }, [isPending, user, navigate, activeId]);
+  const requireUser = useCallback(
+    (clipId?: string) => {
+      if (isPending) return false;
+      if (!user) {
+        void navigate({
+          to: "/login",
+          search: { c: clipId ?? activeIdRef.current },
+        });
+        return false;
+      }
+      return true;
+    },
+    [isPending, user, navigate],
+  );
 
-  async function toggleLike(id: string) {
-    if (!requireUser()) return;
-    const next = new Set(liked);
-    const was = next.has(id);
-    if (was) next.delete(id);
-    else next.add(id);
-    setLiked(next);
-    try {
-      if (was) await unlikeClip({ data: id });
-      else await likeClip({ data: id });
-    } catch {
-      setLiked(new Set(liked));
-      void navigate({ to: "/login", search: { c: id } });
-    }
-  }
+  const toggleLike = useCallback(
+    (id: string) => {
+      if (!requireUser(id)) return;
+      const before = likedRef.current;
+      const wasLiked = before.has(id);
+      const next = new Set(before);
+      if (wasLiked) next.delete(id);
+      else next.add(id);
+      likedRef.current = next;
+      setLiked(next);
 
-  function flashStamp(text: string) {
+      const version = (likeVersions.current.get(id) ?? 0) + 1;
+      likeVersions.current.set(id, version);
+      const previous = likeQueues.current.get(id) ?? Promise.resolve();
+      const task = previous
+        .then(async () => {
+          if (wasLiked) await unlikeClip({ data: id });
+          else await likeClip({ data: id });
+        })
+        .catch(() => {
+          if (likeVersions.current.get(id) !== version) return;
+          const current = new Set(likedRef.current);
+          if (wasLiked) current.add(id);
+          else current.delete(id);
+          likedRef.current = current;
+          setLiked(current);
+          void navigate({ to: "/login", search: { c: id } });
+        });
+      likeQueues.current.set(id, task);
+      void task.finally(() => {
+        if (likeQueues.current.get(id) === task) likeQueues.current.delete(id);
+      });
+    },
+    [navigate, requireUser],
+  );
+
+  const flashStamp = useCallback((text: string) => {
     window.clearTimeout(stampTimer.current);
     setStamp(text);
     stampTimer.current = window.setTimeout(() => setStamp(null), 1400);
-  }
+  }, []);
 
-  function flashToast(text: string) {
+  const flashToast = useCallback((text: string) => {
     window.clearTimeout(toastTimer.current);
     setToast(text);
     toastTimer.current = window.setTimeout(() => setToast(null), 1600);
-  }
+  }, []);
 
-  async function onShare(clip: Clip) {
-    const url = `${window.location.origin}/?c=${clip.id}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "Knock", text: clip.caption, url });
-        return;
+  const onShare = useCallback(
+    async (clip: Clip) => {
+      const url = `${window.location.origin}/?c=${clip.id}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "Knock", text: clip.caption, url });
+          return;
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
       }
-    } catch {
-      /* cancelled */
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      flashToast("Link copied. You may enter.");
-    } catch {
-      flashToast("Held at the door.");
-    }
-  }
+      try {
+        await navigator.clipboard.writeText(url);
+        flashToast("Link copied. You may enter.");
+      } catch {
+        flashToast("Held at the door.");
+      }
+    },
+    [flashToast],
+  );
+
+  const toggleMute = useCallback(() => setMuted((value) => !value), []);
+  const openCreator = useCallback(() => setOverlay("creator"), []);
+  const handleComment = useCallback(
+    () => flashStamp("SPECIFIC ASKS ONLY"),
+    [flashStamp],
+  );
+  const handleVet = useCallback(() => flashStamp("Well vetted."), [flashStamp]);
 
   function goHome() {
     setOverlay(null);
@@ -419,14 +493,15 @@ export function Feed({ startId }: { startId?: string }) {
                 liked={liked.has(clip.id)}
                 muted={muted}
                 isActive={activeId === clip.id}
+                blocked={overlay !== null}
                 hot={wantsPlayer(index, activeIndex, clips.length)}
                 ahead={isAhead(index, activeIndex, clips.length)}
-                onToggleMute={() => setMuted((value) => !value)}
-                onLike={() => void toggleLike(clip.id)}
-                onComment={() => flashStamp("SPECIFIC ASKS ONLY")}
-                onShare={() => void onShare(clip)}
-                onOpenCreator={() => setOverlay("creator")}
-                onVet={() => flashStamp("Well vetted.")}
+                onToggleMute={toggleMute}
+                onLike={toggleLike}
+                onComment={handleComment}
+                onShare={onShare}
+                onOpenCreator={openCreator}
+                onVet={handleVet}
               />
             ))
           )}
@@ -465,7 +540,12 @@ export function Feed({ startId }: { startId?: string }) {
           >
             <MessageCircle className="size-6" />
           </DockItem>
-          <AuthSlot clipId={activeId} onOpen={() => setOverlay("you")} />
+          <AuthSlot
+            clipId={activeId}
+            user={user}
+            isPending={isPending}
+            onOpen={() => setOverlay("you")}
+          />
         </nav>
 
         {overlay === "search" ? (
@@ -489,7 +569,11 @@ export function Feed({ startId }: { startId?: string }) {
         ) : null}
 
         {stamp ? (
-          <div className="pointer-events-none absolute inset-0 z-50 grid place-items-center">
+          <div
+            className="pointer-events-none absolute inset-0 z-50 grid place-items-center"
+            role="status"
+            aria-live="polite"
+          >
             <div
               className="hard-shadow sticker border-[3px] border-heart bg-paper px-5 py-3 text-center font-display text-3xl tracking-tight text-heart"
               style={{ animation: "stamp-in 280ms var(--ease-out) both" }}
@@ -500,7 +584,11 @@ export function Feed({ startId }: { startId?: string }) {
         ) : null}
 
         {toast ? (
-          <div className="absolute inset-x-0 bottom-[calc(var(--dock-total)+0.75rem)] z-50 flex justify-center px-4">
+          <div
+            className="absolute inset-x-0 bottom-[calc(var(--dock-total)+0.75rem)] z-50 flex justify-center px-4"
+            role="status"
+            aria-live="polite"
+          >
             <div
               className="rounded-full bg-cream px-4 py-2 t-meta font-medium text-ink"
               style={{ animation: "toast-in 180ms var(--ease-out) both" }}
@@ -604,7 +692,12 @@ function Sheet({
   children: ReactNode;
 }) {
   return (
-    <div className="sheet-panel z-40 flex flex-col">
+    <div
+      className="sheet-panel z-40 flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
       <div className="feed-header flex h-12 shrink-0 items-center justify-between px-4">
         <p className="font-display text-2xl leading-none text-fg">{title}</p>
         <button
@@ -650,6 +743,7 @@ function SearchSheet({
           autoFocus
           value={q}
           onChange={(event) => setQ(event.target.value)}
+          aria-label="Search clips"
           placeholder="Name. Purpose of visit."
           className="mt-2 h-11 w-full rounded-full bg-fg/12 px-4 t-caption text-fg outline-none ring-1 ring-fg/20 placeholder:text-muted"
         />

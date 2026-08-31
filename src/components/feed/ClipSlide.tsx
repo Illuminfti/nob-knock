@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import { Heart, MessageCircle, Plus, Share2, VolumeX } from "lucide-react";
 import { ASSET_V, type Clip } from "@/lib/feed/catalog";
 
@@ -7,12 +7,13 @@ type Props = {
   liked: boolean;
   muted: boolean;
   isActive: boolean;
+  blocked: boolean;
   hot: boolean;
   ahead: boolean;
   onToggleMute: () => void;
-  onLike: () => void;
+  onLike: (id: string) => void;
   onComment: () => void;
-  onShare: () => void;
+  onShare: (clip: Clip) => void;
   onOpenCreator: () => void;
   onVet: () => void;
 };
@@ -31,11 +32,12 @@ function releaseVideo(el: HTMLVideoElement | null) {
   el.load();
 }
 
-export function ClipSlide({
+function ClipSlideComponent({
   clip,
   liked,
   muted,
   isActive,
+  blocked,
   hot,
   ahead,
   onToggleMute,
@@ -48,11 +50,13 @@ export function ClipSlide({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rootRef = useRef<HTMLElement>(null);
   const lastTap = useRef(0);
+  const singleTapTimer = useRef<number>(0);
+  const burstTimer = useRef<number>(0);
+  const progressRef = useRef<HTMLDivElement>(null);
   const wasActive = useRef(false);
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
   const [paused, setPaused] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [burst, setBurst] = useState(false);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
@@ -61,7 +65,7 @@ export function ClipSlide({
     if (!hot) {
       setReady(false);
       setFailed(false);
-      setProgress(0);
+      if (progressRef.current) progressRef.current.style.transform = "scaleX(0)";
     }
   }, [hot, clip.id]);
 
@@ -78,7 +82,7 @@ export function ClipSlide({
     const el = videoRef.current;
     if (!el || failed || !hot) return;
 
-    if (!(isActive && !paused)) {
+    if (!(isActive && !blocked && !paused)) {
       if (!isActive) wasActive.current = false;
       el.pause();
       el.muted = true;
@@ -133,7 +137,7 @@ export function ClipSlide({
     return () => {
       cancelled = true;
     };
-  }, [isActive, paused, failed, hot, clip.id]);
+  }, [isActive, blocked, paused, failed, hot, clip.id]);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -146,7 +150,29 @@ export function ClipSlide({
   }, [isActive, clip.id]);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || blocked || !hot) return;
+    const onVisibilityChange = () => {
+      const el = videoRef.current;
+      if (!el) return;
+      if (document.hidden) {
+        el.pause();
+        return;
+      }
+      if (paused || failed) return;
+      el.muted = true;
+      void el
+        .play()
+        .then(() => {
+          if (!mutedRef.current) el.muted = false;
+        })
+        .catch(() => undefined);
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [isActive, blocked, hot, paused, failed]);
+
+  useEffect(() => {
+    if (!isActive || blocked) return;
     function onKey(event: KeyboardEvent) {
       const tag = (event.target as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
@@ -159,31 +185,40 @@ export function ClipSlide({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isActive, muted, onToggleMute]);
+  }, [isActive, blocked, muted, onToggleMute]);
 
   useEffect(() => {
-    return () => releaseVideo(videoRef.current);
-  }, []);
+    const video = videoRef.current;
+    return () => {
+      window.clearTimeout(singleTapTimer.current);
+      window.clearTimeout(burstTimer.current);
+      releaseVideo(video);
+    };
+  }, [hot]);
 
   function onTime() {
     if (!isActive) return;
     const el = videoRef.current;
-    if (!el || !el.duration) return;
-    setProgress(el.currentTime / el.duration);
+    if (!el || !el.duration || !progressRef.current) return;
+    const progress = Math.max(0, Math.min(1, el.currentTime / el.duration));
+    progressRef.current.style.transform = `scaleX(${progress})`;
   }
 
   function handleTap() {
     const now = Date.now();
     if (now - lastTap.current < 280 && lastTap.current !== 0) {
       lastTap.current = 0;
+      window.clearTimeout(singleTapTimer.current);
+      window.clearTimeout(burstTimer.current);
       setBurst(true);
-      window.setTimeout(() => setBurst(false), 520);
-      onLike();
+      burstTimer.current = window.setTimeout(() => setBurst(false), 520);
+      onLike(clip.id);
       return;
     }
     const tapId = now;
     lastTap.current = tapId;
-    window.setTimeout(() => {
+    window.clearTimeout(singleTapTimer.current);
+    singleTapTimer.current = window.setTimeout(() => {
       if (lastTap.current !== tapId) return;
       if (muted) onToggleMute();
       else setPaused((value) => !value);
@@ -191,12 +226,14 @@ export function ClipSlide({
   }
 
   const likeCount = clip.seedLikes + (liked ? 1 : 0);
-  const spinning = isActive && !paused && !muted && !failed;
+  const spinning = isActive && !blocked && !paused && !muted && !failed;
 
   return (
     <section
       ref={rootRef}
       data-clip={clip.id}
+      data-active={isActive ? "true" : undefined}
+      aria-label={clip.scene}
       className="clip-slide relative h-full w-full snap-start snap-always overflow-hidden bg-bg"
     >
       <img
@@ -286,7 +323,7 @@ export function ClipSlide({
         <RailButton
           label={formatCount(likeCount)}
           active={liked}
-          onClick={onLike}
+          onClick={() => onLike(clip.id)}
           ariaLabel="Like"
         >
           <Heart
@@ -298,7 +335,7 @@ export function ClipSlide({
         <RailButton label="Ask" onClick={onComment} ariaLabel="Ask">
           <MessageCircle className="size-7 fill-fg text-fg" />
         </RailButton>
-        <RailButton label="Share" onClick={onShare} ariaLabel="Share">
+        <RailButton label="Share" onClick={() => onShare(clip)} ariaLabel="Share">
           <Share2 className="size-6 text-fg" />
         </RailButton>
         <button
@@ -329,14 +366,13 @@ export function ClipSlide({
       </div>
 
       <div className="progress-track z-20">
-        <div
-          className="h-full bg-nob"
-          style={{ width: `${Math.min(100, progress * 100)}%` }}
-        />
+        <div ref={progressRef} className="clip-progress h-full bg-nob" />
       </div>
     </section>
   );
 }
+
+export const ClipSlide = memo(ClipSlideComponent);
 
 function RailButton({
   label,
