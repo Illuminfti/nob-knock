@@ -5,7 +5,7 @@ on:
     branches:
       - qa/buttery-smooth-20260831
     paths:
-      - .qa-remediate.gz.b64
+      - .qa-remediate/**
       - .github/workflows/remediate.yml
 
 concurrency:
@@ -34,7 +34,8 @@ jobs:
 
       - name: Decode and apply remediation
         run: |
-          base64 --decode .qa-remediate.gz.b64 > /tmp/qa-remediate.mjs.gz
+          cat .qa-remediate/part-* > /tmp/qa-remediate.mjs.gz.b64
+          base64 --decode /tmp/qa-remediate.mjs.gz.b64 > /tmp/qa-remediate.mjs.gz
           gzip --decompress --stdout /tmp/qa-remediate.mjs.gz > /tmp/qa-remediate.mjs
           node --check /tmp/qa-remediate.mjs
           node /tmp/qa-remediate.mjs
