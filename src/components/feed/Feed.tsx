@@ -13,7 +13,7 @@ import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { CLIPS, type Clip } from "@/lib/feed/catalog";
 import { likeClip, listMyLikes, unlikeClip } from "@/lib/feed/likes";
-import { isAhead, wantsPlayer } from "@/lib/feed/media";
+import { isAhead, indexFromScroll, wantsPlayer } from "@/lib/feed/media";
 import { NobMark } from "@/components/knock/NobMark";
 import { AuthSlot } from "./AuthSlot";
 import { ClipSlide } from "./ClipSlide";
@@ -60,8 +60,38 @@ export function Feed({ startId }: { startId?: string }) {
   );
   const clips: Clip[] = tab === "following" ? following : CLIPS;
   const activeIndex = Math.max(0, clips.findIndex((clip) => clip.id === activeId));
+  const activeIdRef = useRef(activeId);
+  const clipsRef = useRef(clips);
+  activeIdRef.current = activeId;
+  clipsRef.current = clips;
 
   const didHonorStart = useRef(false);
+
+  useEffect(() => {
+    const root = scrollerRef.current;
+    if (!root) return;
+    let raf = 0;
+    const pick = () => {
+      raf = 0;
+      if (overlayRef.current) return;
+      const list = clipsRef.current;
+      const idx = indexFromScroll(root.scrollTop, root.clientHeight, list.length);
+      const id = list[idx]?.id;
+      if (id && id !== activeIdRef.current) setActiveId(id);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(pick);
+    };
+    root.addEventListener("scroll", onScroll, { passive: true });
+    root.addEventListener("scrollend", pick);
+    root.addEventListener("touchend", pick, { passive: true });
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      root.removeEventListener("scrollend", pick);
+      root.removeEventListener("touchend", pick);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   useEffect(() => {
     if (!startId) return;

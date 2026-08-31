@@ -51,6 +51,8 @@ export function ClipSlide({
   const rootRef = useRef<HTMLElement>(null);
   const lastTap = useRef(0);
   const wasActive = useRef(false);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [burst, setBurst] = useState(false);
@@ -63,11 +65,11 @@ export function ClipSlide({
     const scroller = node.parentElement;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
           onActive(clip.id);
         }
       },
-      { root: scroller, threshold: [0.55, 0.75] },
+      { root: scroller, threshold: [0.25, 0.4, 0.55, 0.75, 1] },
     );
     io.observe(node);
     return () => io.disconnect();
@@ -83,27 +85,86 @@ export function ClipSlide({
 
   useEffect(() => {
     const el = videoRef.current;
+    if (!el || !hot) return;
+    el.setAttribute("playsinline", "true");
+    el.setAttribute("webkit-playsinline", "true");
+    el.playsInline = true;
+    el.defaultMuted = true;
+    if (el.readyState < HTMLMediaElement.HAVE_METADATA) {
+      try {
+        el.load();
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [hot, clip.src]);
+
+  useEffect(() => {
+    const el = videoRef.current;
     if (!el || failed || !hot) return;
-    el.muted = muted;
-    if (isActive && !paused) {
-      if (!wasActive.current) {
+
+    if (!(isActive && !paused)) {
+      if (!isActive) wasActive.current = false;
+      el.pause();
+      el.muted = true;
+      return;
+    }
+
+    if (!wasActive.current) {
+      try {
+        el.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+    }
+    wasActive.current = true;
+
+    let cancelled = false;
+    const kick = async () => {
+      if (cancelled) return;
+      // Always start muted so iOS/Chrome will autoplay after a swipe.
+      el.muted = true;
+      el.defaultMuted = true;
+      try {
+        await el.play();
+      } catch {
+        if (cancelled) return;
         try {
-          el.currentTime = 0;
+          await el.play();
         } catch {
-          /* ignore */
+          return;
         }
       }
-      wasActive.current = true;
-      const tryPlay = () => {
-        void el.play().catch(() => undefined);
+      if (cancelled) return;
+      if (!mutedRef.current) el.muted = false;
+    };
+
+    if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      void kick();
+    } else {
+      const onReady = () => {
+        void kick();
       };
-      if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) tryPlay();
-      else el.addEventListener("canplay", tryPlay, { once: true });
-      return () => el.removeEventListener("canplay", tryPlay);
+      el.addEventListener("canplay", onReady, { once: true });
+      el.addEventListener("loadeddata", onReady, { once: true });
+      void kick();
+      return () => {
+        cancelled = true;
+        el.removeEventListener("canplay", onReady);
+        el.removeEventListener("loadeddata", onReady);
+      };
     }
-    if (!isActive) wasActive.current = false;
-    el.pause();
-  }, [isActive, muted, paused, failed, hot]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive, paused, failed, hot, clip.id]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !isActive || el.paused) return;
+    el.muted = muted;
+  }, [muted, isActive]);
 
   useEffect(() => {
     if (!isActive) setPaused(false);
@@ -178,14 +239,13 @@ export function ClipSlide({
           src={clip.src}
           playsInline
           loop
-          muted={muted}
-          autoPlay={isActive}
           preload={isActive || ahead ? "auto" : "metadata"}
           disablePictureInPicture
           onTimeUpdate={onTime}
           onClick={handleTap}
           onPlaying={() => setReady(true)}
           onLoadedData={() => setReady(true)}
+          onCanPlay={() => setReady(true)}
           onError={() => setFailed(true)}
         />
       ) : null}
