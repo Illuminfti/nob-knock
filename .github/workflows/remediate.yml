@@ -1,0 +1,113 @@
+name: Apply QA remediation
+
+on:
+  push:
+    branches:
+      - qa/buttery-smooth-20260831
+    paths:
+      - .qa-remediate.gz.b64
+      - .github/workflows/remediate.yml
+
+concurrency:
+  group: qa-remediation
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    name: Apply, test, and commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Decode and apply remediation
+        run: |
+          base64 --decode .qa-remediate.gz.b64 > /tmp/qa-remediate.mjs.gz
+          gzip --decompress --stdout /tmp/qa-remediate.mjs.gz > /tmp/qa-remediate.mjs
+          node --check /tmp/qa-remediate.mjs
+          node /tmp/qa-remediate.mjs
+
+      - name: Repair dependency lock
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Auth invariant
+        run: npm run check:auth
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint without warnings
+        run: npm run lint -- --max-warnings=0
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Media and bundle budgets
+        run: npm run perf:budget
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start preview server
+        run: |
+          npm run preview > /tmp/knock-preview.log 2>&1 &
+          echo $! > /tmp/knock-preview.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8081/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/knock-preview.log
+          exit 1
+
+      - name: Desktop and mobile smoke
+        run: |
+          sudo mkdir -p /workspace/screenshots
+          sudo chown -R "$USER":"$USER" /workspace
+          node scripts/browser-smoke.mjs \
+            http://127.0.0.1:8081/ \
+            /workspace/screenshots/remediation.png
+
+      - name: Feed interaction and player lifecycle QA
+        run: npm run qa:feed -- http://127.0.0.1:8081/ /workspace/screenshots/feed-qa.json
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: remediation-evidence
+          path: /workspace/screenshots
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Show preview log on failure
+        if: failure()
+        run: cat /tmp/knock-preview.log || true
+
+      - name: Commit verified remediation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json src scripts docs
+          git diff --cached --stat
+          git commit -m "perf: make the video feed buttery and regression-proof"
+          git push origin HEAD:qa/buttery-smooth-20260831
