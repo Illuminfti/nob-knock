@@ -37,6 +37,16 @@ jobs:
           cat .qa-remediate/part-* > /tmp/qa-remediate.mjs.gz.b64
           base64 --decode /tmp/qa-remediate.mjs.gz.b64 > /tmp/qa-remediate.mjs.gz
           gzip --decompress --stdout /tmp/qa-remediate.mjs.gz > /tmp/qa-remediate.mjs
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/qa-remediate.mjs')
+          source = path.read_text()
+          old = '${url.pathname}${url.search}${url.hash}'
+          new = r'\${url.pathname}\${url.search}\${url.hash}'
+          if old not in source:
+              raise SystemExit('history URL template marker not found')
+          path.write_text(source.replace(old, new))
+          PY
           node --check /tmp/qa-remediate.mjs
           node /tmp/qa-remediate.mjs
 
