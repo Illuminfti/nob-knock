@@ -142,6 +142,26 @@ function authPopupPlugin(): Plugin {
   };
 }
 
+function mediaCachePlugin(): Plugin {
+  const attach = (server: { middlewares: { use: (fn: (req: { url?: string }, res: { setHeader: (k: string, v: string) => void }, next: () => void) => void) => void } }) => {
+    server.middlewares.use((req, res, next) => {
+      const path = (req.url ?? "").split("?", 1)[0] ?? "";
+      if (path.startsWith("/clips/") || path.startsWith("/stills/")) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        if (path.startsWith("/clips/")) {
+          res.setHeader("Accept-Ranges", "bytes");
+        }
+      }
+      next();
+    });
+  };
+  return {
+    name: "knock-media-cache",
+    configureServer: attach,
+    configurePreviewServer: attach,
+  };
+}
+
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
@@ -161,6 +181,7 @@ export default defineConfig(({ command, isPreview }) => ({
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
+    mediaCachePlugin(),
     // Dev-only /__app-env, read by scripts/check-auth-invariant.mjs.
     appEnvPlugin(),
     // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
@@ -175,6 +196,14 @@ export default defineConfig(({ command, isPreview }) => ({
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
+            routeRules: {
+              "/clips/**": {
+                headers: { "cache-control": "public, max-age=31536000, immutable" },
+              },
+              "/stills/**": {
+                headers: { "cache-control": "public, max-age=31536000, immutable" },
+              },
+            },
           }),
         ]
       : []),

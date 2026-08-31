@@ -11,8 +11,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { House, MessageCircle, Plus, Search, Stamp, X } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { CLIPS, type Clip } from "@/lib/feed/catalog";
+import { ASSET_V, CLIPS, type Clip } from "@/lib/feed/catalog";
 import { likeClip, listMyLikes, unlikeClip } from "@/lib/feed/likes";
+import { isAhead, wantsPlayer } from "@/lib/feed/media";
 import { NobMark } from "@/components/knock/NobMark";
 import { AuthSlot } from "./AuthSlot";
 import { ClipSlide } from "./ClipSlide";
@@ -244,8 +245,15 @@ export function Feed({ startId }: { startId?: string }) {
     });
   }
 
+  const nextClip =
+    clips.length > 0 ? clips[activeIndex === clips.length - 1 ? 0 : activeIndex + 1] : undefined;
+  const laterClip = clips[activeIndex + 2];
+
   return (
     <div className="relative grid h-dvh place-items-center overflow-hidden bg-bg text-fg">
+      {nextClip ? <link rel="preload" as="video" href={nextClip.src} /> : null}
+      {laterClip ? <link rel="preload" as="image" href={laterClip.poster} /> : null}
+
       <aside className="pointer-events-none absolute top-1/2 left-8 hidden max-w-[11rem] -translate-y-1/2 xl:block">
         <p className="font-display text-5xl leading-none tracking-tight text-balance">Knock</p>
         <p className="mt-4 t-caption text-muted">Mike Hawk. For You.</p>
@@ -316,7 +324,8 @@ export function Feed({ startId }: { startId?: string }) {
                 liked={liked.has(clip.id)}
                 muted={muted}
                 isActive={activeId === clip.id}
-                hot={Math.abs(index - activeIndex) <= 1}
+                hot={wantsPlayer(index, activeIndex, clips.length)}
+                ahead={isAhead(index, activeIndex, clips.length)}
                 onActive={setActiveId}
                 onToggleMute={() => setMuted((value) => !value)}
                 onLike={() => void toggleLike(clip.id)}
@@ -565,6 +574,8 @@ function SearchSheet({
                 <img
                   src={clip.poster}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="h-14 w-10 shrink-0 rounded-md object-cover object-top"
                 />
                 <span>
@@ -585,7 +596,7 @@ function CreatorSheet({ onClose }: { onClose: () => void }) {
     <Sheet title="The Nob" onClose={onClose}>
       <div className="flex flex-col items-center pt-6 text-center">
         <img
-          src="/stills/mike-avatar.png?v=v13"
+          src={`/stills/mike-avatar.png?v=${ASSET_V}`}
           alt=""
           className="h-28 w-28 rounded-full object-cover object-top ring-2 ring-nob"
         />

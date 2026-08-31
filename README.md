@@ -4,6 +4,8 @@ Mike Hawk. For You.
 
 A vertical, infinite-scroll feed of the Nob: twenty clips, one doorman, zero tolerance for "quick question."
 
+The feed only keeps three decoders warm (current, previous, next). Clips stream from the first frame — they are not held at the door until the whole file arrives.
+
 Tap for sound. Double-tap to like. Sign in with X to keep receipts on file.
 
 - Live: [nob-knock.vercel.app](https://nob-knock.vercel.app)

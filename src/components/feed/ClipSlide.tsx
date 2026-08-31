@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Heart, MessageCircle, Plus, Share2, VolumeX } from "lucide-react";
-import type { Clip } from "@/lib/feed/catalog";
+import { ASSET_V, type Clip } from "@/lib/feed/catalog";
 
 type Props = {
   clip: Clip;
@@ -8,6 +8,7 @@ type Props = {
   muted: boolean;
   isActive: boolean;
   hot: boolean;
+  ahead: boolean;
   onActive: (id: string) => void;
   onToggleMute: () => void;
   onLike: () => void;
@@ -23,12 +24,21 @@ function formatCount(n: number) {
   return k >= 10 ? `${Math.round(k)}K` : `${k.toFixed(1).replace(/\.0$/, "")}K`;
 }
 
+function releaseVideo(el: HTMLVideoElement | null) {
+  if (!el) return;
+  el.pause();
+  el.removeAttribute("src");
+  el.removeAttribute("autoplay");
+  el.load();
+}
+
 export function ClipSlide({
   clip,
   liked,
   muted,
   isActive,
   hot,
+  ahead,
   onActive,
   onToggleMute,
   onLike,
@@ -45,6 +55,7 @@ export function ClipSlide({
   const [progress, setProgress] = useState(0);
   const [burst, setBurst] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const node = rootRef.current;
@@ -63,8 +74,16 @@ export function ClipSlide({
   }, [clip.id, onActive]);
 
   useEffect(() => {
+    if (!hot) {
+      setReady(false);
+      setFailed(false);
+      setProgress(0);
+    }
+  }, [hot, clip.id]);
+
+  useEffect(() => {
     const el = videoRef.current;
-    if (!el || failed) return;
+    if (!el || failed || !hot) return;
     el.muted = muted;
     if (isActive && !paused) {
       if (!wasActive.current) {
@@ -75,12 +94,16 @@ export function ClipSlide({
         }
       }
       wasActive.current = true;
-      void el.play().catch(() => undefined);
-    } else {
-      if (!isActive) wasActive.current = false;
-      el.pause();
+      const tryPlay = () => {
+        void el.play().catch(() => undefined);
+      };
+      if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) tryPlay();
+      else el.addEventListener("canplay", tryPlay, { once: true });
+      return () => el.removeEventListener("canplay", tryPlay);
     }
-  }, [isActive, muted, paused, failed]);
+    if (!isActive) wasActive.current = false;
+    el.pause();
+  }, [isActive, muted, paused, failed, hot]);
 
   useEffect(() => {
     if (!isActive) setPaused(false);
@@ -102,7 +125,12 @@ export function ClipSlide({
     return () => window.removeEventListener("keydown", onKey);
   }, [isActive, muted, onToggleMute]);
 
+  useEffect(() => {
+    return () => releaseVideo(videoRef.current);
+  }, []);
+
   function onTime() {
+    if (!isActive) return;
     const el = videoRef.current;
     if (!el || !el.duration) return;
     setProgress(el.currentTime / el.duration);
@@ -133,28 +161,34 @@ export function ClipSlide({
     <section
       ref={rootRef}
       data-clip={clip.id}
-      className="relative h-full w-full snap-start snap-always overflow-hidden bg-bg"
+      className="clip-slide relative h-full w-full snap-start snap-always overflow-hidden bg-bg"
     >
       <img
         src={clip.poster}
         alt=""
+        decoding="async"
+        fetchPriority={isActive || hot ? "high" : "low"}
+        loading={hot ? "eager" : "lazy"}
         className={`absolute inset-0 h-full w-full object-cover ${failed ? "poster-drift" : ""}`}
       />
-      <video
-        ref={videoRef}
-        key={clip.src}
-        className="absolute inset-0 h-full w-full object-cover"
-        src={clip.src}
-        poster={clip.poster}
-        playsInline
-        loop
-        muted={muted}
-        preload={hot ? "auto" : "metadata"}
-        disablePictureInPicture
-        onTimeUpdate={onTime}
-        onClick={handleTap}
-        onError={() => setFailed(true)}
-      />
+      {hot ? (
+        <video
+          ref={videoRef}
+          className={`clip-video absolute inset-0 h-full w-full object-cover ${ready ? "is-ready" : ""}`}
+          src={clip.src}
+          playsInline
+          loop
+          muted={muted}
+          autoPlay={isActive}
+          preload={isActive || ahead ? "auto" : "metadata"}
+          disablePictureInPicture
+          onTimeUpdate={onTime}
+          onClick={handleTap}
+          onPlaying={() => setReady(true)}
+          onLoadedData={() => setReady(true)}
+          onError={() => setFailed(true)}
+        />
+      ) : null}
 
       <div className="video-veil pointer-events-none absolute inset-0" />
 
@@ -198,7 +232,7 @@ export function ClipSlide({
             aria-label={`${clip.displayName} profile`}
           >
             <img
-              src="/stills/mike-avatar.png?v=v13"
+              src={`/stills/mike-avatar.png?v=${ASSET_V}`}
               alt=""
               className="h-12 w-12 rounded-full object-cover object-top ring-2 ring-fg"
             />

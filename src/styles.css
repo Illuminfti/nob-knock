@@ -231,6 +231,21 @@
   filter: blur(4px);
 }
 
+.clip-slide {
+  contain: layout paint style;
+}
+
+.clip-video {
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.clip-video.is-ready {
+  opacity: 1;
+}
+
 .phone-shell {
   position: relative;
   height: 100%;

@@ -1,3 +1,6 @@
+export const ASSET_V = "v14";
+const V = ASSET_V;
+
 export type Clip = {
   id: string;
   src: string;
@@ -10,8 +13,6 @@ export type Clip = {
   sound: string;
   seedLikes: number;
 };
-
-const V = "v13";
 
 export const CLIPS: Clip[] = [
   {
