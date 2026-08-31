@@ -1,4 +1,4 @@
-export const ASSET_V = "v15";
+export const ASSET_V = "v16";
 const V = ASSET_V;
 
 export type Clip = {
