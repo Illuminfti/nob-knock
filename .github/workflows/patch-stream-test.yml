@@ -1,0 +1,49 @@
+name: Isolate streaming PWA fixture
+
+on:
+  push:
+    branches:
+      - qa/buttery-smooth-20260831
+    paths:
+      - .github/workflows/patch-stream-test.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Isolate stream injector tests from app identity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/grok-pwa-plugin.test.mjs')
+          source = path.read_text()
+          old = 'createHeadInjector({ appName: "Wild Race" })'
+          new = (
+              'createHeadInjector({ appName: "Wild Race", '
+              'cwd: mkdtempSync(join(tmpdir(), "grok-pwa-stream-")), site: {} })'
+          )
+          count = source.count(old)
+          if count < 1:
+              raise SystemExit('stream injector fixture target not found')
+          path.write_text(source.replace(old, new))
+          Path('.qa-remediate/retry-stream.txt').write_text(
+              f'isolated {count} streaming fixture calls\n'
+          )
+          PY
+
+      - name: Commit fixture repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/grok-pwa-plugin.test.mjs .qa-remediate/retry-stream.txt
+          git commit -m "test: isolate streaming PWA fixture"
+          git push origin HEAD:qa/buttery-smooth-20260831
