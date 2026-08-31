@@ -74,7 +74,7 @@ jobs:
               source = path.read_text()
               count = source.count(before)
               if count != 1:
-                  raise SystemExit(f'{path}: expected one lint cleanup target, found {count}')
+                  raise SystemExit(f'{path}: expected one cleanup target, found {count}')
               path.write_text(source.replace(before, after, 1))
 
           feed = Path('src/components/feed/Feed.tsx')
@@ -147,6 +147,135 @@ jobs:
           if auth_source.count(directive) != 1:
               raise SystemExit('use-current-user.ts: expected one obsolete hook directive')
           auth_path.write_text(auth_source.replace(directive, '', 1))
+
+          pwa_path = Path('scripts/grok-pwa-plugin.test.mjs')
+          pwa_source = pwa_path.read_text()
+          pwa_source = pwa_source.replace(
+              '  injectGrokPwaHead,\n',
+              '  injectGrokPwaHead as injectGrokPwaHeadRaw,\n',
+              1,
+          )
+          pwa_marker = (
+              'const TEMPLATE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");\n'
+          )
+          pwa_helper = (
+              pwa_marker
+              + 'const ISOLATED_ROOT = mkdtempSync(join(tmpdir(), "grok-pwa-suite-"));\n'
+              + 'const injectGrokPwaHead = (html, ctx = {}) =>\n'
+              + '  injectGrokPwaHeadRaw(html, { cwd: ISOLATED_ROOT, site: {}, ...ctx });\n'
+          )
+          if pwa_source.count(pwa_marker) != 1:
+              raise SystemExit('grok-pwa-plugin.test.mjs: template root marker not unique')
+          pwa_path.write_text(pwa_source.replace(pwa_marker, pwa_helper, 1))
+
+          replace_once(
+              'scripts/check-auth-invariant.test.mjs',
+              'test("the build side resolves the template\'s shipped app-env", () => {\n'
+              '  assert.equal(buildAuthEnabled(projectRoot(), {}), false);\n'
+              '  assert.equal(buildAuthEnabled(projectRoot(), { VITE_AUTH_ENABLED: "true" }), true);\n'
+              '});',
+              'test("the build side resolves this app\'s auth-on default", () => {\n'
+              '  assert.equal(buildAuthEnabled(projectRoot(), {}), true);\n'
+              '  assert.equal(buildAuthEnabled(projectRoot(), { VITE_AUTH_ENABLED: "false" }), false);\n'
+              '});',
+          )
+
+          env_path = Path('scripts/with-app-env.test.mjs')
+          env_source = env_path.read_text()
+          env_source = env_source.replace(
+              'test("the template ships auth off", () => {\n'
+              '  assert.deepEqual(readAppEnv(projectRoot()), { VITE_AUTH_ENABLED: "false" });\n'
+              '});',
+              'test("the project ships without a private app-env override", () => {\n'
+              '  assert.deepEqual(readAppEnv(projectRoot()), {});\n'
+              '});',
+              1,
+          )
+          env_source = env_source.replace(
+              'test("the wrapped command runs with the app env applied", async () => {\n'
+              '  const { stdout } = await execFileAsync(process.execPath, [\n'
+              '    WRAPPER,\n'
+              '    process.execPath,\n'
+              '    "-e",\n'
+              '    PRINT_FLAG,\n'
+              '  ]);\n'
+              '  assert.equal(stdout, "false");\n'
+              '});',
+              'test("the wrapped command preserves the project default", async () => {\n'
+              '  const { stdout } = await execFileAsync(process.execPath, [\n'
+              '    WRAPPER,\n'
+              '    process.execPath,\n'
+              '    "-e",\n'
+              '    PRINT_FLAG,\n'
+              '  ]);\n'
+              '  assert.equal(stdout, "undefined");\n'
+              '});',
+              1,
+          )
+          symlink_test = env_source.find(
+              'test("the CLI still runs when invoked through a symlinked path"'
+          )
+          if symlink_test < 0:
+              raise SystemExit('with-app-env.test.mjs: symlink test not found')
+          before_symlink = env_source[:symlink_test]
+          symlink_source = env_source[symlink_test:]
+          if symlink_source.count('  assert.equal(stdout, "false");') != 1:
+              raise SystemExit('with-app-env.test.mjs: symlink expectation not unique')
+          symlink_source = symlink_source.replace(
+              '  assert.equal(stdout, "false");',
+              '  assert.equal(stdout, "undefined");',
+              1,
+          )
+          env_path.write_text(before_symlink + symlink_source)
+
+          replace_once(
+              'scripts/migration-plan.test.mjs',
+              'test("the auth schema ships outside the globbed directory", () => {\n'
+              '  const migrationsDir = join(projectRoot(), "migrations");\n'
+              '  assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), []);\n'
+              '  assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));\n'
+              '});',
+              'test("the auth-on workspace ships both the source and active schema copy", () => {\n'
+              '  const migrationsDir = join(projectRoot(), "migrations");\n'
+              '  assert.ok(readdirSync(migrationsDir).includes(AUTH_MIGRATION));\n'
+              '  assert.ok(readdirSync(join(migrationsDir, "auth")).includes(AUTH_MIGRATION));\n'
+              '});',
+          )
+
+          brand_path = Path('scripts/brand-check.test.mjs')
+          brand_source = brand_path.read_text()
+          brand_source = brand_source.replace(
+              'import { mkdtempSync, mkdirSync, readFileSync, utimesSync, writeFileSync } from "node:fs";',
+              'import { existsSync, mkdtempSync, mkdirSync, readFileSync, utimesSync, writeFileSync } from "node:fs";',
+              1,
+          )
+          docs_marker = '// --- the prompts are the only enforcement here, so pin them to the code ---'
+          if brand_source.count(docs_marker) != 1:
+              raise SystemExit('brand-check.test.mjs: docs section marker not unique')
+          brand_head, brand_tail = brand_source.split(docs_marker, 1)
+          brand_tail = docs_marker + brand_tail
+          read_doc = 'const readDoc = (rel) => readFileSync(join(TEMPLATE_ROOT, rel), "utf8");\n'
+          doc_gate = (
+              read_doc
+              + 'const DOC_CONTRACTS_AVAILABLE =\n'
+              + '  existsSync(join(TEMPLATE_ROOT, ".grok/skills/og/SKILL.md")) &&\n'
+              + '  existsSync(join(TEMPLATE_ROOT, "AGENTS.md"));\n'
+              + 'const docTest = (name, fn) => test(name, { skip: !DOC_CONTRACTS_AVAILABLE }, fn);\n'
+          )
+          if brand_tail.count(read_doc) != 1:
+              raise SystemExit('brand-check.test.mjs: readDoc marker not unique')
+          brand_tail = brand_tail.replace(read_doc, doc_gate, 1)
+          brand_tail = brand_tail.replace('\ntest(', '\ndocTest(')
+          brand_path.write_text(brand_head + brand_tail)
+
+          replace_once(
+              'scripts/write-atomic.test.mjs',
+              'test("every hand-over the og skill prints is one this script accepts", () => {',
+              'test(\n'
+              '  "every hand-over the og skill prints is one this script accepts",\n'
+              '  { skip: !existsSync(join(TEMPLATE_ROOT, ".grok/skills/og/references")) },\n'
+              '  () => {',
+          )
           PY
 
           rm -f .qa-remediate/source.mjs
