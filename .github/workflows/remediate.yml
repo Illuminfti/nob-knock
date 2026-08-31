@@ -81,7 +81,23 @@ jobs:
         run: npm ci
 
       - name: Auth invariant
-        run: npm run check:auth
+        run: |
+          npm run dev > /tmp/knock-dev.log 2>&1 &
+          dev_pid=$!
+          trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/__app-env > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/knock-dev.log
+            exit 1
+          fi
+          npm run check:auth -- --dev-url http://127.0.0.1:8080
 
       - name: Typecheck
         run: npm run typecheck
@@ -134,9 +150,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Show preview log on failure
+      - name: Show logs on failure
         if: failure()
-        run: cat /tmp/knock-preview.log || true
+        run: |
+          cat /tmp/knock-dev.log 2>/dev/null || true
+          cat /tmp/knock-preview.log 2>/dev/null || true
 
       - name: Commit verified remediation
         run: |
