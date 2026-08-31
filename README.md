@@ -6,7 +6,8 @@ A vertical, infinite-scroll feed of the Nob: ten clips, one doorman, zero tolera
 
 Tap for sound. Double-tap to like. Sign in with X to keep receipts on file.
 
-Repo: [github.com/Illuminfti/nob-knock](https://github.com/Illuminfti/nob-knock)
+- Live: [nob-knock.vercel.app](https://nob-knock.vercel.app)
+- Repo: [github.com/Illuminfti/nob-knock](https://github.com/Illuminfti/nob-knock)
 
 ## The clips
 
