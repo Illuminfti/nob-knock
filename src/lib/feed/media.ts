@@ -4,8 +4,9 @@ export const PLAYER_RADIUS = 1;
 /** Mount a decoder for the active clip, its neighbours, and wrap-to-first. */
 export function wantsPlayer(index: number, activeIndex: number, length: number) {
   if (length <= 0) return false;
-  if (Math.abs(index - activeIndex) <= PLAYER_RADIUS) return true;
-  return activeIndex === length - 1 && index === 0;
+  const directDistance = Math.abs(index - activeIndex);
+  const circularDistance = Math.min(directDistance, length - directDistance);
+  return circularDistance <= PLAYER_RADIUS;
 }
 
 /** Next clip in swipe order: the one we preload fully. */

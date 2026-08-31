@@ -258,6 +258,12 @@ export const CLIPS: Clip[] = [
   },
 ];
 
+const CLIP_IDS = new Set(CLIPS.map((clip) => clip.id));
+
+export function isClipId(value: unknown): value is string {
+  return typeof value === "string" && CLIP_IDS.has(value);
+}
+
 export function clipById(id: string) {
   return CLIPS.find((clip) => clip.id === id);
 }

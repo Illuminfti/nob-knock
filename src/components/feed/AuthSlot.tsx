@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { User } from "lucide-react";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import type { AppUser } from "@/lib/auth/use-current-user";
 
 export function AuthSlot({
   clipId,
+  user,
+  isPending,
   onOpen,
 }: {
   clipId?: string;
+  user: AppUser | null;
+  isPending: boolean;
   onOpen?: () => void;
 }) {
-  const { user, isPending } = useCurrentUserState();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
