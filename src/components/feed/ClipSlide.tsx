@@ -198,7 +198,7 @@ export function ClipSlide({
             aria-label={`${clip.displayName} profile`}
           >
             <img
-              src="/stills/mike-avatar.png?v=v12"
+              src="/stills/mike-avatar.png?v=v13"
               alt=""
               className="h-12 w-12 rounded-full object-cover object-top ring-2 ring-fg"
             />
