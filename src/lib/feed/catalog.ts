@@ -11,7 +11,7 @@ export type Clip = {
   seedLikes: number;
 };
 
-const V = "v11";
+const V = "v12";
 
 export const CLIPS: Clip[] = [
   {
@@ -40,6 +40,19 @@ export const CLIPS: Clip[] = [
     seedLikes: 4800,
   },
   {
+    id: "rain",
+    src: `/clips/rain.mp4?v=${V}`,
+    poster: `/stills/rain.jpg?v=${V}`,
+    duration: 8,
+    handle: "mikehawk",
+    displayName: "Mike Hawk",
+    scene: "Cold exposure",
+    caption:
+      "cold exposure. five minutes daily. others buy ice barrels. britain provides.",
+    sound: "rain on paving · original",
+    seedLikes: 5,
+  },
+  {
     id: "denials",
     src: `/clips/denials.mp4?v=${V}`,
     poster: `/stills/denials.jpg?v=${V}`,
@@ -65,6 +78,19 @@ export const CLIPS: Clip[] = [
     seedLikes: 98,
   },
   {
+    id: "commute",
+    src: `/clips/commute.mp4?v=${V}`,
+    poster: `/stills/commute.jpg?v=${V}`,
+    duration: 25,
+    handle: "mikehawk",
+    displayName: "Mike Hawk",
+    scene: "Day in the life",
+    caption:
+      "day in the life. 6:58 the commute. traffic was reasonable. 7 o'clock we're open. 12:30 lunch at the desk. the desk is a door. 5 o'clock clocking off. i live at work. it's called passion.",
+    sound: "hallway footsteps · original",
+    seedLikes: 658,
+  },
+  {
     id: "grwm",
     src: `/clips/grwm.mp4?v=${V}`,
     poster: `/stills/grwm.jpg?v=${V}`,
@@ -76,6 +102,19 @@ export const CLIPS: Clip[] = [
       "grwm for the door. no skincare. standards don't moisturise. buttons. descend. right. who's knocking.",
     sound: "hanger scrape · Nob",
     seedLikes: 312,
+  },
+  {
+    id: "comments",
+    src: `/clips/comments.mp4?v=${V}`,
+    poster: `/stills/comments.jpg?v=${V}`,
+    duration: 20,
+    handle: "mikehawk",
+    displayName: "Mike Hawk",
+    scene: "Comments",
+    caption:
+      "you've had things to say. i've printed them. 'bro guards a letterbox.' correct. 'who hurt you?' a mass mailing, march. 'drop the skincare routine.' dropped. the rest didn't pass moderation.",
+    sound: "paper shuffle · original",
+    seedLikes: 1,
   },
   {
     id: "eat",

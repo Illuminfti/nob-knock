@@ -17,7 +17,7 @@ function Login() {
   return (
     <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-bg px-6 text-fg">
       <img
-        src="/stills/mike-full.jpg?v=v11"
+        src="/stills/mike-full.jpg?v=v12"
         alt=""
         className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top opacity-30"
       />
