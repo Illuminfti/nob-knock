@@ -11,12 +11,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { House, MessageCircle, Plus, Search, Stamp, X } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { ASSET_V, CLIPS, type Clip } from "@/lib/feed/catalog";
+import { CLIPS, type Clip } from "@/lib/feed/catalog";
 import { likeClip, listMyLikes, unlikeClip } from "@/lib/feed/likes";
 import { isAhead, wantsPlayer } from "@/lib/feed/media";
 import { NobMark } from "@/components/knock/NobMark";
 import { AuthSlot } from "./AuthSlot";
 import { ClipSlide } from "./ClipSlide";
+import { CreatorSheet } from "./CreatorSheet";
 
 type Tab = "foryou" | "following";
 type Overlay = "search" | "creator" | "you" | null;
@@ -382,7 +383,7 @@ export function Feed({ startId }: { startId?: string }) {
           />
         ) : null}
         {overlay === "creator" ? (
-          <CreatorSheet onClose={() => setOverlay(null)} />
+          <CreatorSheet liked={liked} onJump={jumpTo} onClose={() => setOverlay(null)} />
         ) : null}
         {overlay === "you" && user ? (
           <YouSheet
@@ -587,26 +588,6 @@ function SearchSheet({
           ))
         )}
       </ul>
-    </Sheet>
-  );
-}
-
-function CreatorSheet({ onClose }: { onClose: () => void }) {
-  return (
-    <Sheet title="The Nob" onClose={onClose}>
-      <div className="flex flex-col items-center pt-6 text-center">
-        <img
-          src={`/stills/mike-avatar.png?v=${ASSET_V}`}
-          alt=""
-          className="h-28 w-28 rounded-full object-cover object-top ring-2 ring-nob"
-        />
-        <p className="mt-5 font-display text-4xl leading-none text-fg">Mike Hawk</p>
-        <p className="mt-2 t-handle text-muted">@mikehawk</p>
-        <p className="mt-4 max-w-[28ch] t-caption leading-relaxed text-pretty text-muted">
-          A tiny, judgmental doorman, on camera. Standards held.
-        </p>
-        <p className="mt-6 t-meta text-cream">{CLIPS.length} clips on file</p>
-      </div>
     </Sheet>
   );
 }
