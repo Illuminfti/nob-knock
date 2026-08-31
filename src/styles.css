@@ -1,0 +1,361 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #090704;
+  --color-ink: #17110b;
+  --color-fg: #fffbed;
+  --color-paper: #fffbed;
+  --color-cream: #fff5d7;
+  --color-muted: #c4b9a8;
+  --color-nob: #fddb2d;
+  --color-orange: #ff7c18;
+  --color-heart: #f24b3f;
+  --font-display: "DynaPuff", system-ui, sans-serif;
+  --font-sans: "Bricolage Grotesque", system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-quick: 150ms;
+  --motion-fast: 250ms;
+  --dock-h: 3.55rem;
+  --dock-total: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px));
+}
+
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  html {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    overflow: hidden;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-nob);
+    outline-offset: 3px;
+  }
+}
+
+@keyframes like-burst {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes stamp-in {
+  0% {
+    transform: rotate(-12deg) scale(1.15);
+    opacity: 0;
+  }
+  70% {
+    transform: rotate(-6deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-6deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes disc-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes poster-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes sound-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.hard-shadow {
+  box-shadow: 6px 7px 0 var(--color-ink);
+}
+
+.sticker {
+  border-radius: 14px 12px 15px 11px;
+}
+
+.nob-word {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--color-ink);
+}
+
+.nob-chip {
+  filter: drop-shadow(3px 4px 0 var(--color-nob));
+}
+
+.t-hero {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 8vw, 2.75rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.t-handle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.t-caption {
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.t-meta {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.t-rail {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.t-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.t-dock {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.tap {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.tap-y {
+  min-height: 44px;
+}
+
+.feed-scroll {
+  scrollbar-width: none;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.feed-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.video-veil {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--color-bg) 42%, transparent) 0%,
+    transparent 22%,
+    transparent 52%,
+    color-mix(in oklab, var(--color-bg) 88%, transparent) 100%
+  );
+}
+
+.icon-swap {
+  transition:
+    opacity var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out),
+    filter var(--motion-fast) var(--ease-out);
+}
+
+.icon-swap-on {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
+.icon-swap-off {
+  opacity: 0;
+  transform: scale(0.25);
+  filter: blur(4px);
+}
+
+.phone-shell {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  max-width: 430px;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-ink);
+}
+
+.feed-stage {
+  --dock-total: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px));
+}
+
+.feed-header {
+  padding-top: max(0.35rem, env(safe-area-inset-top, 0px));
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.5);
+}
+
+.feed-dock {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--dock-total);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--color-bg);
+  border-top: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
+}
+
+.dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.rail-stack {
+  position: absolute;
+  right: 0.6rem;
+  bottom: calc(var(--dock-total) + 0.85rem);
+  filter: drop-shadow(0 1px 6px rgb(0 0 0 / 0.55));
+}
+
+.caption-block {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(var(--dock-total) + 0.55rem);
+  padding-inline: 1rem;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.6);
+}
+
+.progress-track {
+  position: absolute;
+  inset-inline: 0;
+  bottom: var(--dock-total);
+  height: 2px;
+  background: color-mix(in oklab, var(--color-fg) 20%, transparent);
+}
+
+.disc {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px var(--color-fg);
+  background: var(--color-ink);
+}
+
+.disc-spin {
+  animation: disc-rotate 4s linear infinite;
+}
+
+.disc-paused {
+  animation: disc-rotate 4s linear infinite;
+  animation-play-state: paused;
+}
+
+.poster-drift {
+  animation: poster-drift 18s var(--ease-out) alternate infinite;
+  transform-origin: center;
+}
+
+.sound-line {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 88%, transparent);
+}
+
+.sound-marquee {
+  display: inline-block;
+  padding-right: 1.5rem;
+  animation: sound-marquee 9s linear infinite;
+}
+
+.sheet-panel {
+  position: absolute;
+  inset: 0;
+  bottom: var(--dock-total);
+  background: var(--color-bg);
+}
+
+@media (min-width: 960px) {
+  .phone-shell {
+    height: min(calc(100dvh - 1.25rem), 860px);
+    border-radius: 2rem;
+    box-shadow:
+      0 0 0 2px color-mix(in oklab, var(--color-fg) 12%, transparent),
+      0 28px 80px rgb(0 0 0 / 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

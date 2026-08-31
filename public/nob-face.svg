@@ -1,0 +1,236 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-9 4 212 192" role="img" aria-label="Nob the doorman, compact chip build">
+  <title>Nob — the compact chip build</title>
+  <style>
+svg{  --ink:#17110b;--cream:#fff5d7;--paper:#fffbed;--yellow:#fddb2d;
+  --pink:#ff59a8;--orange:#ff7c18;--sclera:#f3e7c6;
+  --ease-out:cubic-bezier(0.22,1,0.36,1);--ease-snap:cubic-bezier(0.34,1.56,0.64,1);
+  --ink-w-hero:7;--ink-w-obj:5;--ink-w-detail:3;}
+.nob-face{--char-w-hero:5.3;--char-w-obj:3.5;--char-w-mouth:4.5;--char-w-detail:2.6;}
+.nob-knob{--char-w-hero:4.9;--char-w-obj:3.5;--char-w-mouth:5.25;--char-w-detail:2.8;}
+.nob-face,.nob-knob{transform-box:fill-box;transform-origin:center;}
+.nob-anim{transform-box:fill-box;transform-origin:center;}
+
+.nob-head,.nob-ear{fill:var(--orange);stroke:var(--ink);}
+.nob-head{stroke-width:var(--char-w-hero);}
+.nob-ear{stroke-width:var(--char-w-obj);}
+.nob-eye-white{fill:var(--sclera);}
+.nob-eye-outline{fill:none;stroke:var(--ink);stroke-width:var(--char-w-obj);}
+.nob-pupil{fill:var(--ink);transform-box:fill-box;transform-origin:center;
+  transform:translate(var(--look-x,0px),var(--look-y,0px));}
+.nob-lid{fill:var(--ink);}
+.nob-brow{fill:var(--ink);}
+.nob-nose{fill:var(--pink);stroke:var(--ink);stroke-width:var(--char-w-detail);}
+.nob-mouth path{fill:none;stroke:var(--ink);stroke-width:var(--char-w-mouth);stroke-linecap:round;}
+.nob-verdict-mark{opacity:0;transform:scale(0.5) rotate(-18deg);}
+.nob-verdict-mark circle{fill:var(--paper);stroke:var(--ink);stroke-width:5;}
+.nob-verdict-mark path{fill:none;stroke:var(--ink);stroke-width:8;stroke-linecap:round;}
+.nob-mark-x,.nob-mark-check,.nob-mouth-smirk,.nob-mouth-smile,.nob-mouth-grin{display:none;}
+
+/* the one reusable portrait plate (globals.css L2355-2435) */
+.nob-master-shadow{fill:#090704;opacity:1;}
+.nob-master-shadow-grain{opacity:0.34;}
+.nob-master-head{fill:var(--orange);stroke:var(--ink);stroke-width:7;}
+.nob-master-ear{fill:var(--orange);stroke:var(--ink);stroke-width:6;stroke-linejoin:round;}
+.nob-master-ear-fold{fill:none;stroke:var(--ink);stroke-width:3.3;stroke-linecap:round;}
+.nob-master-grain{opacity:0.5;}
+.nob-master-dot{fill:#8b3105;}
+.nob-master-screen{opacity:0.28;}
+.nob-master-chin-grain{opacity:0.48;}
+.nob-master-edge-grain{fill:none;stroke:#9b3905;stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:1 7 3 12 1 5;opacity:0.34;}
+.nob-master .nob-eye-outline{stroke-width:4.6;}
+.nob-master .nob-lid{fill:var(--orange);}
+.nob-master .nob-master-lid-arc{stroke-width:3.7;}
+.nob-master .nob-brow{fill:none;stroke:var(--ink);stroke-width:4.4;
+  stroke-linecap:round;stroke-linejoin:round;}
+.nob-master .nob-nose{stroke-width:3.8;}
+.nob-master .knob-mouth path,.nob-master .nob-mouth path{stroke-width:4.2;}
+
+/* the knob nib: every contour ~35% lighter (globals.css L2436-2505) */
+.nob-knob .nob-ear{stroke-width:3.4;stroke-linejoin:round;}
+.nob-knob .nob-head{stroke-width:3.4;}
+.nob-knob .nob-eye-outline,.nob-knob .nob-nose{stroke-width:3.2;}
+.nob-knob .nob-brow{stroke:var(--ink);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;}
+.knob-lid-arc{fill:none;stroke:var(--ink);stroke-width:3.2;stroke-linecap:round;}
+.knob-mouth path,.knob-mouth ellipse{fill:none;stroke:var(--ink);stroke-width:3.2;stroke-linecap:round;}
+.knob-mouth-flat,.knob-mouth-smile,.knob-mouth-frown,.knob-mouth-o{display:none;}
+.knob-eye-shut{display:none;}
+.knob-shut-line,.knob-shut-lash{fill:none;stroke:var(--ink);stroke-linecap:round;}
+.knob-shut-line{stroke-width:var(--char-w-obj);}
+.knob-shut-lash{stroke-width:var(--char-w-detail);opacity:0.72;}
+
+/* states: mood in the brows and lids, never the head colour (globals.css L1972) */
+.nob-interrogating .nob-brow-left{transform:translateY(4px) rotate(13deg);}
+.nob-interrogating .nob-brow-right{transform:translateY(-6px) rotate(-10deg);}
+.nob-interrogating .nob-mouth{transform:translateX(4px) rotate(-5deg);}
+.nob-interrogating .nob-mouth-line{display:none;}
+.nob-interrogating .nob-mouth-smirk{display:inline;}
+.nob-judging .nob-lid-l,.nob-judging .nob-lid-r{transform:translateY(6px);}
+.nob-judging .nob-brow-left,.nob-judging .nob-brow-right{transform:translateY(4px);}
+.nob-judging .nob-mouth{transform:scaleX(0.6);}
+.nob-rejected{transform:rotate(-4deg);}
+.nob-rejected .nob-brow-left{transform:translateY(6px) rotate(12deg);}
+.nob-rejected .nob-brow-right{transform:translateY(6px) rotate(-12deg);}
+.nob-rejected .nob-lid-l,.nob-rejected .nob-lid-r{transform:translateY(7px);}
+.nob-rejected .nob-mouth{transform:translateY(3px) rotate(-8deg) scaleX(0.75);}
+.nob-rejected .nob-verdict-mark{opacity:1;transform:scale(1) rotate(-8deg);}
+.nob-rejected .nob-mark-x{display:inline;}
+.nob-approved{transform:rotate(1.5deg);}
+.nob-approved .nob-brow-left{transform:translateY(-6px) rotate(-6deg);}
+.nob-approved .nob-brow-right{transform:translateY(-6px) rotate(6deg);}
+.nob-approved .nob-lid-r{transform:translateY(13px);}
+.nob-approved .nob-mouth-line{display:none;}
+.nob-approved .nob-mouth-smile{display:inline;}
+.nob-approved .nob-verdict-mark{opacity:1;transform:scale(1) rotate(-8deg);}
+.nob-approved .nob-mark-check{display:inline;}
+.nob-open{transform:rotate(3deg);}
+.nob-open .nob-brow-left,.nob-open .nob-brow-right{transform:translateY(-5px);}
+.nob-open .nob-lid-l,.nob-open .nob-lid-r{transform:translateY(-6px);}
+.nob-open .nob-mouth-line{display:none;}
+.nob-open .nob-mouth-grin{display:inline;}
+
+/* .nob-compact — globals.css L2065-2078 + L2604-2607, baked in because an SVG
+   embedded through an img element cannot inherit a page class or a page custom
+   property. Chips render 24-45px: below that the thinned nib turns to hairline, so small
+   Nob keeps a heavier line — optical sizing, not a different character. */
+.nob-compact{--char-w-hero:6;--char-w-obj:4.5;--char-w-bow:4.5;--char-w-mouth:5.6;--char-w-detail:3.2;}
+.nob-compact .nob-eye-outline{stroke-width:4.5;}
+.nob-compact .nob-nose{stroke-width:3.2;}
+.nob-compact .nob-brow{stroke-width:4.5;}
+.nob-compact .knob-mouth path,.nob-compact .nob-mouth path{stroke-width:5.6;}
+.nob-compact .nob-master-screen,.nob-compact .nob-master-edge-grain,
+.nob-compact .nob-master-shadow-grain,.nob-compact .nob-master-grain,
+.nob-compact .nob-master-chin-grain,.nob-compact .nob-grain,
+.nob-compact .nob-shade{display:none;}
+.nob-compact [filter]{filter:none;}
+@media (prefers-reduced-motion: no-preference) {
+  .nob-compact .nob-lid-l {
+    animation: nob-blink 7.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .nob-compact .nob-lid-r {
+    animation: nob-blink 7.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s infinite;
+  }
+}
+@keyframes nob-blink {
+  0%, 93%, 100% { transform: translateY(0); }
+  96% { transform: translateY(22px); }
+}
+</style>
+  <defs>
+    <filter id="face-watching-rough" x="-18%" y="-18%" width="146%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.026" numOctaves="3" seed="5" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="face-watching-spray" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.58" numOctaves="2" seed="11" result="n"/>
+      <feComponentTransfer in="n" result="speck">
+        <feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 .16 .48 .78 1"/>
+      </feComponentTransfer>
+      <feComposite in="speck" in2="SourceGraphic" operator="in" result="dots"/>
+      <feFlood flood-color="#8f3507" result="c"/>
+      <feComposite in="c" in2="dots" operator="in"/>
+    </filter>
+    <pattern id="face-watching-dots" width="7" height="7" patternUnits="userSpaceOnUse">
+      <circle class="nob-master-dot" cx="3.5" cy="3.5" r="1.35"/>
+    </pattern>
+    <clipPath id="face-watching-headClip"><ellipse cx="94" cy="94" rx="78" ry="78"/></clipPath>
+    <clipPath id="face-watching-shadowClip"><ellipse cx="112" cy="112" rx="78" ry="78"/></clipPath>
+    <clipPath id="face-watching-eyeL"><path d="M40 74 C52 73 68 74 82 74 C82 90 75 99 62 100 C49 100 42 92 40 74 Z"/></clipPath>
+    <clipPath id="face-watching-eyeR"><path d="M93 74 C107 74 124 74 139 74 C139 91 132 100 118 100 C104 100 95 92 93 74 Z"/></clipPath>
+  </defs>
+  <g class="nob-master nob-reference nob-face nob-watching nob-compact">
+  <g class="nob-master-shadow-group" filter="url(#face-watching-rough)">
+    <ellipse class="nob-master-shadow" cx="112" cy="112" rx="78" ry="78"/>
+    <g clip-path="url(#face-watching-shadowClip)">
+      <rect class="nob-master-shadow-grain" filter="url(#face-watching-spray)" x="30" y="30" width="170" height="170"/>
+    </g>
+  </g>
+
+  <g class="nob-master-portrait" filter="url(#face-watching-rough)">
+    <path class="nob-ear nob-master-ear nob-master-ear-left"
+      d="M21 73 C -3 73 -4 105 20 107 C 15 97 15 83 21 73 Z"/>
+    <path class="nob-ear nob-master-ear nob-master-ear-right"
+      d="M168 71 C 199 67 207 111 172 117 C 181 103 181 85 168 71 Z"/>
+    <ellipse class="nob-head nob-master-head" cx="94" cy="94" rx="78" ry="78"/>
+    <g clip-path="url(#face-watching-headClip)">
+      <rect class="nob-grain nob-master-grain" filter="url(#face-watching-spray)" x="13" y="13" width="164" height="164"/>
+      <path class="nob-master-screen"
+        d="M133 17 Q 177 55 171 111 Q 163 153 108 173 L180 177 L180 14 Z" fill="url(#face-watching-dots)"/>
+      <path class="nob-master-chin-grain"
+        d="M22 119 C35 159 70 173 110 169 C139 166 158 151 168 128 C142 151 118 158 89 158 C58 158 39 146 22 119 Z"
+        fill="url(#face-watching-dots)"/>
+      <ellipse class="nob-master-edge-grain" cx="94" cy="94" rx="74" ry="74"/>
+    </g>
+    <path class="nob-master-ear-fold nob-master-ear-fold-left"
+      d="M18 81 C7 78 4 90 10 97 C13 100 17 101 20 100"/>
+    <path class="nob-master-ear-fold nob-master-ear-fold-right"
+      d="M176 82 C188 72 197 85 190 94 C186 99 179 99 177 104 C175 108 176 111 179 113"/>
+
+    <g class="nob-eye-group knob-eye-l">
+      <path class="nob-eye-white" d="M40 74 C52 73 68 74 82 74 C82 90 75 99 62 100 C49 100 42 92 40 74 Z"/>
+      <!-- pupil re-registered from the SHIPPED expression layer (nob-parts.tsx
+           L1153: circle cx=250 cy=359 r=42 in the 1072u raster frame), mapped
+           through the eye-clip affine x=(X+3.571)/5.2143, y=(Y+60.1)/5.2308.
+           The fallback's own cy=75 sat 5u high and let the disc bulge out of
+           the socket; the raster master and the live site both hang it here. -->
+      <circle class="nob-pupil" cx="48.6" cy="80.1" r="8.05"/>
+      <g clip-path="url(#face-watching-eyeL)">
+        <g class="nob-anim knob-lid-l nob-lid-l">
+          <path class="nob-lid" d="M37 52 L85 52 L84 73 Q 62 75 39 74 Z"/>
+          <path class="knob-lid-arc nob-master-lid-arc" d="M40 74 Q 61 75 82 74"/>
+        </g>
+      </g>
+      <path class="nob-eye-outline" d="M40 74 C52 73 68 74 82 74 C82 90 75 99 62 100 C49 100 42 92 40 74 Z"/>
+      <g class="knob-eye-shut">
+        <path class="knob-shut-line" d="M96 91 Q 70 78 44 92"/>
+        <path class="knob-shut-lash" d="M61 99 Q 51 98 44 102"/>
+      </g>
+    </g>
+    <g class="nob-eye-group knob-eye-r">
+      <path class="nob-eye-white" d="M93 74 C107 74 124 74 139 74 C139 91 132 100 118 100 C104 100 95 92 93 74 Z"/>
+      <!-- ditto, nob-parts.tsx L1169: circle cx=536 cy=360 r=42 -->
+      <circle class="nob-pupil" cx="103.5" cy="80.3" r="8.05"/>
+      <g clip-path="url(#face-watching-eyeR)">
+        <g class="nob-anim knob-lid-r nob-lid-r">
+          <path class="nob-lid" d="M90 52 L142 52 L141 73 Q 118 75 92 74 Z"/>
+          <path class="knob-lid-arc nob-master-lid-arc" d="M93 74 Q 117 75 139 74"/>
+        </g>
+      </g>
+      <path class="nob-eye-outline" d="M93 74 C107 74 124 74 139 74 C139 91 132 100 118 100 C104 100 95 92 93 74 Z"/>
+      <g class="knob-eye-shut">
+        <path class="knob-shut-line" d="M104 90 Q 130 77 156 91"/>
+        <path class="knob-shut-lash" d="M139 98 Q 149 97 156 101"/>
+      </g>
+    </g>
+
+    <g class="nob-anim knob-brow-l nob-brow-left">
+      <path class="nob-brow" d="M42 59 C55 56 65 66 88 65"/>
+    </g>
+    <g class="nob-anim knob-brow-r nob-brow-right">
+      <path class="nob-brow" d="M96 66 C110 70 124 67 138 64"/>
+    </g>
+
+    <!-- nose re-registered to the locked master: its pink plate measures
+         X 412-476, Y 419-479 -> centre (85.8, 97.3) in this frame. The
+         fallback's cx=91 pushed the button 5.2u right of the character's
+         nose and doubled visibly in the registration overlay. Radii and the
+         3.8u nib are left exactly as authored. -->
+    <ellipse class="nob-nose" cx="85.8" cy="97.3" rx="8.5" ry="8"/>
+
+    <g class="nob-anim knob-mouth nob-mouth">
+      <path class="knob-mouth-line nob-mouth-line" d="M63 120 Q 84 119 106 122"/>
+      <path class="nob-mouth-smirk" d="M63 120 Q 84 124 106 117"/>
+      <path class="knob-mouth-flat" d="M63 122 L106 122"/>
+      <path class="knob-mouth-smile nob-mouth-smile" d="M63 116 Q 85 134 107 115"/>
+      <path class="knob-mouth-frown" d="M63 125 Q 84 114 106 122"/>
+      <path class="knob-mouth-o" d="M79 121 Q 87 114 95 121 Q 87 129 79 121 Z"/>
+      <path class="nob-mouth-grin" d="M64 116 Q 85 136 106 114"/>
+    </g>
+  </g>
+  <g class="nob-anim nob-verdict-mark">
+    <circle cx="179" cy="32.8" r="14.2"/>
+    <path class="nob-mark-x" d="M172.1 25.9 L185.9 39.7 M185.9 25.9 L172.1 39.7"/>
+    <path class="nob-mark-check" d="M171.4 32.8 L177.2 38.7 L187.6 25.1"/>
+  </g>
+  </g>
+</svg>
