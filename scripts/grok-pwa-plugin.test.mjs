@@ -370,7 +370,7 @@ test("injects into documents with no head element", () => {
 });
 
 test("streaming injector matches </HEAD> case-insensitively", () => {
-  const injector = createHeadInjector({ appName: "Wild Race" });
+  const injector = createHeadInjector({ appName: "Wild Race", cwd: mkdtempSync(join(tmpdir(), "grok-pwa-stream-")), site: {} });
   const chunks = [
     ...injector.push("<html><HEAD><title>x</title></HE"),
     ...injector.push("AD><body>hello</body></html>"),
@@ -400,7 +400,7 @@ test("uses the app name in the injected title tag", () => {
 });
 
 test("streaming injector handles </head> split across chunks", () => {
-  const injector = createHeadInjector({ appName: "Wild Race" });
+  const injector = createHeadInjector({ appName: "Wild Race", cwd: mkdtempSync(join(tmpdir(), "grok-pwa-stream-")), site: {} });
   const chunks = [
     ...injector.push("<html><head><title>x</title></he"),
     ...injector.push("ad><body>hello</body></html>"),
