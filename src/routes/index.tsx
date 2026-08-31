@@ -14,7 +14,6 @@ export const Route = createFileRoute("/")({
     return {
       links: [
         { rel: "preload", href: clip.poster, as: "image" },
-        { rel: "preload", href: clip.src, as: "video", type: "video/mp4" },
         ...(next && next.id !== clip.id
           ? [{ rel: "preload" as const, href: next.poster, as: "image" }]
           : []),

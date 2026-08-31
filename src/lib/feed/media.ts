@@ -1,5 +1,5 @@
 /** How many neighbours keep a real <video> (current ± this). */
-export const PLAYER_RADIUS = 2;
+export const PLAYER_RADIUS = 1;
 
 /** Mount a decoder for the active clip, its neighbours, and wrap-to-first. */
 export function wantsPlayer(index: number, activeIndex: number, length: number) {

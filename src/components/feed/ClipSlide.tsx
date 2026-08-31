@@ -9,7 +9,6 @@ type Props = {
   isActive: boolean;
   hot: boolean;
   ahead: boolean;
-  onActive: (id: string) => void;
   onToggleMute: () => void;
   onLike: () => void;
   onComment: () => void;
@@ -39,7 +38,6 @@ export function ClipSlide({
   isActive,
   hot,
   ahead,
-  onActive,
   onToggleMute,
   onLike,
   onComment,
@@ -60,22 +58,6 @@ export function ClipSlide({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const node = rootRef.current;
-    if (!node) return;
-    const scroller = node.parentElement;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
-          onActive(clip.id);
-        }
-      },
-      { root: scroller, threshold: [0.25, 0.4, 0.55, 0.75, 1] },
-    );
-    io.observe(node);
-    return () => io.disconnect();
-  }, [clip.id, onActive]);
-
-  useEffect(() => {
     if (!hot) {
       setReady(false);
       setFailed(false);
@@ -90,13 +72,6 @@ export function ClipSlide({
     el.setAttribute("webkit-playsinline", "true");
     el.playsInline = true;
     el.defaultMuted = true;
-    if (el.readyState < HTMLMediaElement.HAVE_METADATA) {
-      try {
-        el.load();
-      } catch {
-        /* ignore */
-      }
-    }
   }, [hot, clip.src]);
 
   useEffect(() => {
@@ -231,6 +206,7 @@ export function ClipSlide({
         fetchPriority={isActive || hot ? "high" : "low"}
         loading={hot ? "eager" : "lazy"}
         className={`absolute inset-0 h-full w-full object-cover ${failed ? "poster-drift" : ""}`}
+        onClick={handleTap}
       />
       {hot ? (
         <video
@@ -239,7 +215,7 @@ export function ClipSlide({
           src={clip.src}
           playsInline
           loop
-          preload={isActive || ahead ? "auto" : "metadata"}
+          preload={isActive || ahead ? "auto" : "none"}
           disablePictureInPicture
           onTimeUpdate={onTime}
           onClick={handleTap}

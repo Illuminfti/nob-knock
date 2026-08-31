@@ -66,6 +66,25 @@ export function Feed({ startId }: { startId?: string }) {
   clipsRef.current = clips;
 
   const didHonorStart = useRef(false);
+  const ignorePick = useRef(false);
+
+  const scrollToId = useCallback((id: string) => {
+    const root = scrollerRef.current;
+    const list = clipsRef.current;
+    if (!root || !list.length) return false;
+    const idx = list.findIndex((clip) => clip.id === id);
+    if (idx < 0) return false;
+    const height = root.clientHeight;
+    ignorePick.current = true;
+    if (height) root.scrollTo({ top: idx * height, behavior: "instant" });
+    setActiveId(id);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        ignorePick.current = false;
+      });
+    });
+    return true;
+  }, []);
 
   useEffect(() => {
     const root = scrollerRef.current;
@@ -73,7 +92,7 @@ export function Feed({ startId }: { startId?: string }) {
     let raf = 0;
     const pick = () => {
       raf = 0;
-      if (overlayRef.current) return;
+      if (overlayRef.current || ignorePick.current) return;
       const list = clipsRef.current;
       const idx = indexFromScroll(root.scrollTop, root.clientHeight, list.length);
       const id = list[idx]?.id;
@@ -84,37 +103,33 @@ export function Feed({ startId }: { startId?: string }) {
     };
     root.addEventListener("scroll", onScroll, { passive: true });
     root.addEventListener("scrollend", pick);
-    root.addEventListener("touchend", pick, { passive: true });
+    const onTouchEnd = () => {
+      pick();
+      window.setTimeout(pick, 80);
+      window.setTimeout(pick, 220);
+    };
+    root.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
       root.removeEventListener("scroll", onScroll);
       root.removeEventListener("scrollend", pick);
-      root.removeEventListener("touchend", pick);
+      root.removeEventListener("touchend", onTouchEnd);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
   useEffect(() => {
     if (!startId) return;
-    const root = scrollerRef.current;
-    if (!root) return;
     if (!didHonorStart.current) {
-      const target = root.querySelector(`[data-clip="${startId}"]`);
-      if (target instanceof HTMLElement) {
-        target.scrollIntoView({ behavior: "instant", block: "start" });
-        setActiveId(startId);
-      }
+      scrollToId(startId);
+      requestAnimationFrame(() => scrollToId(startId));
       didHonorStart.current = true;
       return;
     }
-    if (startId === activeId) return;
-    const target = root.querySelector(`[data-clip="${startId}"]`);
-    if (target instanceof HTMLElement) {
-      target.scrollIntoView({ behavior: "instant", block: "start" });
-      setActiveId(startId);
-    }
+    if (startId === activeIdRef.current) return;
+    scrollToId(startId);
     // Inbound URL only. Our own replace updates already match activeId.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startId]);
+  }, [startId, scrollToId]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -136,16 +151,12 @@ export function Feed({ startId }: { startId?: string }) {
     const root = scrollerRef.current;
     if (!root) return;
     if (tab === "foryou" && lastForYouId.current) {
-      const el = root.querySelector(`[data-clip="${lastForYouId.current}"]`);
-      if (el instanceof HTMLElement) {
-        el.scrollIntoView({ behavior: "instant", block: "start" });
-        setActiveId(lastForYouId.current);
-        return;
-      }
+      scrollToId(lastForYouId.current);
+      return;
     }
-    root.scrollTo({ top: 0, behavior: "instant" });
+    scrollerRef.current?.scrollTo({ top: 0, behavior: "instant" });
     setActiveId(clips[0]?.id ?? "");
-  }, [tab]);
+  }, [tab, scrollToId]);
 
   const skip = useCallback(
     (dir: 1 | -1) => {
@@ -155,10 +166,10 @@ export function Feed({ startId }: { startId?: string }) {
       const next = idx + dir;
       if (next < 0 || next >= clips.length) {
         const target = clips[dir === 1 ? 0 : clips.length - 1];
-        const el = root.querySelector(`[data-clip="${target.id}"]`);
-        if (el instanceof HTMLElement) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        const height = root.clientHeight;
+        const idx = dir === 1 ? 0 : clips.length - 1;
+        if (height) root.scrollTo({ top: idx * height, behavior: "smooth" });
+        setActiveId(target.id);
         return;
       }
       root.scrollBy({ top: dir * root.clientHeight, behavior: "smooth" });
@@ -267,22 +278,16 @@ export function Feed({ startId }: { startId?: string }) {
     setOverlay(null);
     setTab("foryou");
     requestAnimationFrame(() => {
-      const root = scrollerRef.current;
-      const el = root?.querySelector(`[data-clip="${id}"]`);
-      if (el instanceof HTMLElement) {
-        el.scrollIntoView({ behavior: "instant", block: "start" });
-        setActiveId(id);
-      }
+      requestAnimationFrame(() => {
+        scrollToId(id);
+      });
     });
   }
 
-  const nextClip =
-    clips.length > 0 ? clips[activeIndex === clips.length - 1 ? 0 : activeIndex + 1] : undefined;
-  const laterClip = clips[activeIndex + 2];
+  const laterClip = clips[activeIndex + 1];
 
   return (
     <div className="relative grid h-dvh place-items-center overflow-hidden bg-bg text-fg">
-      {nextClip ? <link rel="preload" as="video" href={nextClip.src} /> : null}
       {laterClip ? <link rel="preload" as="image" href={laterClip.poster} /> : null}
 
       <aside className="pointer-events-none absolute top-1/2 left-8 hidden max-w-[11rem] -translate-y-1/2 xl:block">
@@ -357,7 +362,6 @@ export function Feed({ startId }: { startId?: string }) {
                 isActive={activeId === clip.id}
                 hot={wantsPlayer(index, activeIndex, clips.length)}
                 ahead={isAhead(index, activeIndex, clips.length)}
-                onActive={setActiveId}
                 onToggleMute={() => setMuted((value) => !value)}
                 onLike={() => void toggleLike(clip.id)}
                 onComment={() => flashStamp("SPECIFIC ASKS ONLY")}

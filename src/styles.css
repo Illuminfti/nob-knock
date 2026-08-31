@@ -198,6 +198,7 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   user-select: none;
+  overflow-anchor: none;
 }
 
 .feed-scroll::-webkit-scrollbar {
