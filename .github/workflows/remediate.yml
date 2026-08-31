@@ -45,6 +45,17 @@ jobs:
               '${url.pathname}${url.search}${url.hash}': r'\${url.pathname}\${url.search}\${url.hash}',
               '${window.location.origin}': r'\${window.location.origin}',
               '${clip.id}': r'\${clip.id}',
+              '${progress}': r'\${progress}',
+              '${Math.min(100, progress * 100)}': r'\${Math.min(100, progress * 100)}',
+              '${spec.name}': r'\${spec.name}',
+              '${name}': r'\${name}',
+              '${clips.length}': r'\${clips.length}',
+              '${clip}': r'\${clip}',
+              '${(bytes.length / MiB).toFixed(2)}': r'\${(bytes.length / MiB).toFixed(2)}',
+              '${(total(clips) / MiB).toFixed(2)}': r'\${(total(clips) / MiB).toFixed(2)}',
+              '${poster}': r'\${poster}',
+              '${(bytes / 1024).toFixed(1)}': r'\${(bytes / 1024).toFixed(1)}',
+              '${(total(posters) / MiB).toFixed(2)}': r'\${(total(posters) / MiB).toFixed(2)}',
           }
           for old, new in replacements.items():
               if old not in source:
@@ -57,7 +68,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .qa-remediate/source.mjs
           if ! git diff --cached --quiet; then
-            git commit -m "chore: materialize QA remediation source"
+            git commit -m "chore: audit QA remediation source"
             git push origin HEAD:qa/buttery-smooth-20260831
           fi
           node --check /tmp/qa-remediate.mjs
