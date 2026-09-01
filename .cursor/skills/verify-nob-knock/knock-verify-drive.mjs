@@ -38,11 +38,16 @@ async function driveForYouFeed({ url, evidenceDir, launchBrowser, spawnJson, roo
     await openFeed(page, url);
     beforeId = await activeClipId(page);
     files.push(await screenshot(page, evidenceDir, "for-you-feed-before.png"));
-    await page.keyboard.press("ArrowDown");
+    // Phone viewport: same skip as scripts/feed-qa.mjs mobile. ArrowDown on a
+    // focused .feed-scroll only nudges native scroll and may never change
+    // data-clip; a full-height instant scroll is the user swipe.
+    await page.locator(".feed-scroll").evaluate((element) => {
+      element.scrollTo({ top: element.scrollTop + element.clientHeight, behavior: "instant" });
+    });
     await page.waitForFunction(
       (id) => document.querySelector('[data-active="true"]')?.getAttribute("data-clip") !== id,
       beforeId,
-      { timeout: 8_000 },
+      { timeout: 15_000 },
     );
     afterId = await activeClipId(page);
     afterUrl = page.url();
@@ -233,5 +238,9 @@ const DRIVERS = {
 export async function driveFeature(id, ctx) {
   const driver = DRIVERS[id];
   if (!driver) return { ok: false, feature: id, error: `no driver for ${id}` };
-  return driver(ctx);
+  try {
+    return await driver(ctx);
+  } catch (err) {
+    return { ok: false, feature: id, error: String(err?.message || err) };
+  }
 }

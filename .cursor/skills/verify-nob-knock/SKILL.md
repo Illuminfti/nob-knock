@@ -72,7 +72,7 @@ Stable handles (from `src/components/feed/`):
 | `getByRole("dialog", { name: "Mike Hawk profile" })` | Creator overlay                          |
 | `/login`                                             | Sign-in page (`Receipts ready.`)         |
 
-Desktop skip: `ArrowDown` / `j` (not a click). Vite keeps an HMR websocket; never wait for `networkidle`.
+Desktop skip: `ArrowDown` / `j`. Phone skip: scroll `.feed-scroll` by one viewport (`feed-qa.mjs` mobile). Vite keeps an HMR websocket; never wait for `networkidle`.
 
 `drive for-you-feed` shells to `scripts/feed-qa.mjs` (the CI harness) and captures before/after screenshots in the same run. Other features use Playwright recipes in `knock-verify-drive.mjs`. Recipes live in `features/`. Driving one convenient entry point is incomplete if the map lists others you were asked to prove.
 

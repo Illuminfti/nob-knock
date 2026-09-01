@@ -15,7 +15,7 @@ This directory is the maintained source for verifying Knock's user-facing behavi
 - Start every recipe from `/` on For You unless the feature file says otherwise.
 - Prefer ARIA names, `data-clip`, `data-active`, and `data-tab` over CSS position.
 - Treat lever commands as literal. Keep feature ids unchanged.
-- Desktop skip uses `ArrowDown`. Mobile QA uses `.feed-scroll` (`scripts/feed-qa.mjs`).
+- Desktop skip uses `ArrowDown`. Phone skip uses a full-height `.feed-scroll` jump (`scripts/feed-qa.mjs` mobile).
 - Never wait for `networkidle` (Vite HMR websocket).
 - Cleanup must not delete `artifacts/verify-nob-knock/`.
 
