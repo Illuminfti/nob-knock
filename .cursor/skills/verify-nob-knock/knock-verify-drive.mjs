@@ -24,6 +24,16 @@ async function screenshot(page, dir, name) {
 async function openFeed(page, url) {
   const resp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await page.waitForSelector('[data-active="true"]', { timeout: 15_000 });
+  // URL sync and the scroll listener both land in mount effects. Skipping
+  // before `?c=` matches data-clip scrolls a scroller nobody is listening to.
+  await page.waitForFunction(() => {
+    const id = document.querySelector("[data-active=true]")?.getAttribute("data-clip");
+    try {
+      return Boolean(id && new URL(location.href).searchParams.get("c") === id);
+    } catch {
+      return false;
+    }
+  });
   return resp;
 }
 
@@ -41,9 +51,17 @@ async function driveForYouFeed({ url, evidenceDir, launchBrowser, spawnJson, roo
     // Phone viewport: same skip as scripts/feed-qa.mjs mobile. ArrowDown on a
     // focused .feed-scroll only nudges native scroll and may never change
     // data-clip; a full-height instant scroll is the user swipe.
-    await page.locator(".feed-scroll").evaluate((element) => {
-      element.scrollTo({ top: element.scrollTop + element.clientHeight, behavior: "instant" });
+    const scrolled = await page.evaluate(() => {
+      const element = document.querySelector(".feed-scroll");
+      if (!element) throw new Error("no .feed-scroll");
+      const from = element.scrollTop;
+      const height = element.clientHeight;
+      element.scrollTo({ top: from + height, behavior: "instant" });
+      return { from, to: element.scrollTop, height };
     });
+    if (scrolled.to <= scrolled.from) {
+      throw new Error(`feed-scroll did not move: ${JSON.stringify(scrolled)}`);
+    }
     await page.waitForFunction(
       (id) => document.querySelector('[data-active="true"]')?.getAttribute("data-clip") !== id,
       beforeId,

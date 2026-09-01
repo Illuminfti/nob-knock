@@ -33,6 +33,7 @@ Preconditions:
 ## Gotchas
 
 - On a 390×844 viewport, `ArrowDown` often only nudges `.feed-scroll`. The lever skips with a full-height `scrollTo`, same as `scripts/feed-qa.mjs` mobile. Desktop QA in that script still uses `ArrowDown`.
+- Do not skip until `/?c=` equals the active `data-clip`. That URL write means the mount effects (including the scroll listener) have run. An earlier scroll is a no-op for `data-active`.
 - `networkidle` never settles on `npm run dev`. Use `domcontentloaded` + `[data-active="true"]`.
 - A `?c=` that is not a catalog id is ignored; the feed still starts on `cold-email`.
 - Following with zero likes replaces the feed with "No receipts." — switch back to For You before proving skip.
